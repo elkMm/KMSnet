@@ -61,8 +61,6 @@ def node_emittance_variation(graph, nodelist, beta_min, beta_max, num=100):
     return emittance
 
 
-
-
 def emittance_vector(graph, beta):
     '''Returns the emittances of all nodes.'''
 
@@ -70,14 +68,12 @@ def emittance_vector(graph, beta):
     vec = [node_emittance(graph, node, beta) for _, node in enumerate(nodes)]
 
     # vec_normalized = vec / vector_norm(vec)
-
-
     return [nodes, vec]
 
 
 
-def gibbs_profile(graph, beta):
-    '''Returns the Gibbs profile of the directed multigraph at inverse temperature beta.'''
+def kms_emittance(graph, beta):
+    '''Returns the KMS  emittance of the directed multigraph at inverse temperature beta.'''
     nodes = list(graph.nodes)
     N = len(nodes)
     eMat = emittance_matrix(graph, beta, nodes=nodes)
@@ -92,7 +88,14 @@ def gibbs_profile(graph, beta):
 
     return nodes, np.matrix.transpose(Z)
 
-def node_gibbs_profile(graph, node, beta):
+def kms_emittances_entropy(graph, beta):
+    '''Returns the entropies of all the node KMS emittances.'''
+
+    nodes, X = kms_emittance(graph, beta)
+
+    return [entropy(X[:, j]) for j in range(len(nodes))]
+
+def node_kms_emittance_profile(graph, node, beta):
     '''Gibbs profile of a node.
 
     Returns
@@ -100,17 +103,17 @@ def node_gibbs_profile(graph, node, beta):
     node_profile: array like
     '''
 
-    nodes, Z = gibbs_profile(graph, beta)
+    nodes, Z = kms_emittance(graph, beta)
     i = nodes.index(node)
     node_profile = Z[:, i]
 
     return node_profile
 
 
-def subnet_gibbs_profile(graph, nodelist, beta):
-    '''Returns the sub-matrix correspond to the Gibbs profile of the subnetwork
+def subnet_kms_emittance(graph, nodelist, beta):
+    '''Returns the sub-matrix correspond to the KMS emittance profile of the subnetwork
     defined by the given nodelist.'''
-    nodes, Z = gibbs_profile(graph, beta)
+    nodes, Z = kms_emittance(graph, beta)
     N = len(nodelist)
     W = np.zeros((N, N))
 
@@ -122,12 +125,14 @@ def subnet_gibbs_profile(graph, nodelist, beta):
 
     return nodelist, W
 
-def node_profile_entropy(graph, node, beta):
-    node_profile = node_gibbs_profile(graph, node, beta)
+def node_kms_emittance_profile_entropy(graph, node, beta):
+    node_profile = node_kms_emittance_profile(graph, node, beta)
 
     return entropy(node_profile)
 
-def node_profile_entropy_range(graph, nodelist, beta_min, beta_max, num=50):
+
+
+def node_kms_emittance_profile_entropy_range(graph, nodelist, beta_min, beta_max, num=50):
     '''Compute the entropy of Gibbs profiles for each node in the 
     nodelist and for each value of beta in the range.'''
     if beta_min == beta_max:
@@ -139,7 +144,7 @@ def node_profile_entropy_range(graph, nodelist, beta_min, beta_max, num=50):
     
     for _, T in enumerate(interval):
         beta = 1./T
-        nodes, Z = gibbs_profile(graph, beta)
+        nodes, Z = kms_emittance(graph, beta)
         for u in nodelist:
             i = nodes.index(u)
             profile = Z[:, i]
@@ -149,25 +154,25 @@ def node_profile_entropy_range(graph, nodelist, beta_min, beta_max, num=50):
     return H
 
 
-def node_profile_diversity_range(graph, nodelist, beta_min, beta_max, num=50):
+def node_kms_emittance_profile_diversity_range(graph, nodelist, beta_min, beta_max, num=50):
     '''Compute the diversity of Gibbs profiles for each node in the 
     nodelist and for each value of beta in the range.'''
-    H = node_profile_entropy_range(graph, nodelist, beta_min, beta_max, num=num)
+    H = node_kms_emittance_profile_entropy_range(graph, nodelist, beta_min, beta_max, num=num)
 
     diversity = {'range': H['range']} | {node: [np.exp(x) for _, x in enumerate(H[node])] for node in nodelist}
 
     return diversity
 
-def avg_node_profile(graph, beta):
+def avg_node_kms_emittance_profile(graph, beta):
     V = graph.nodes
     N = len(V)
-    Z = gibbs_profile(graph, beta)[1]
+    Z = kms_emittance(graph, beta)[1]
     X_avg = np.sum(Z[:, i] for i, _ in enumerate(V)) / N
     
     return V, X_avg
 
 
-def avg_node_profile_variation(graph, beta_min, beta_max, num=50):
+def avg_node_kms_emittance_profile_variation(graph, beta_min, beta_max, num=50):
     '''Returns the variation average Gibbs node profile for each beta in the range.'''
     if beta_min == beta_max:
         interval = [1./beta_min]
@@ -185,7 +190,7 @@ def avg_node_profile_variation(graph, beta_min, beta_max, num=50):
 
     for _, T in enumerate(interval):
         beta = 1./T
-        Z = gibbs_profile(graph, beta)[1]
+        Z = kms_emittance(graph, beta)[1]
         X_avg = np.sum(Z[:, i] for i, _ in enumerate(V)) / N
 
         variation['avg_node_profiles'] += [X_avg,]
@@ -195,7 +200,7 @@ def avg_node_profile_variation(graph, beta_min, beta_max, num=50):
 
 def avg_reception_probability_variation(graph, nodelist, beta_min, beta_max, num=50):
 
-    profile_variation_avg = avg_node_profile_variation(graph, beta_min, beta_max, num=num)
+    profile_variation_avg = avg_node_kms_emittance_profile_variation(graph, beta_min, beta_max, num=num)
     interval = profile_variation_avg['range']
     V = profile_variation_avg['nodes']
     profile_avgs = profile_variation_avg['avg_node_profiles']
@@ -215,12 +220,6 @@ def avg_reception_probability_variation(graph, nodelist, beta_min, beta_max, num
 
 
 
-    
-
-
-
-    
-    
 
 def states_kl_variation(graph, nodelist, beta_min, beta_max, num=50):
     '''Return the Kulback-Liebler distance (relative entropy) between the KMS states
@@ -232,7 +231,7 @@ def states_kl_variation(graph, nodelist, beta_min, beta_max, num=50):
 
     kl_distances = {}
     for _, T in interval:
-        nodes, W = subnet_gibbs_profile(graph, nodelist, 1./T)
+        nodes, W = subnet_kms_emittance(graph, nodelist, 1./T)
 
 
 
@@ -240,7 +239,7 @@ def node_reception_profile(graph, node, beta):
     '''Probabilities of reception of the node 
     at inverse temperature beta.'''
 
-    nodes, Z = gibbs_profile(graph, beta)
+    nodes, Z = kms_emittance(graph, beta)
     i = nodes.index(node)
     reception_profile = Z[i, :]/(1. * len(nodes))
 
@@ -313,6 +312,24 @@ def KMS_emittance_dist_entropy_variation(graph, beta_min, beta_max, num=50):
 
 
 
+def node_structural_entropy(graph, nodelist=None):
+    '''
+    Returns the entropy of the column corresponding to 
+    each node of nodelist in the out-degree-ratio matrix
+    obrained by the functipn out_deg_ratio_matrix of the graph.
+    '''
+    nodes = list(graph.nodes)
+
+    if nodelist == None:
+        nodelist = nodes
+    R = out_deg_ratio_matrix(graph, nodes=nodes)
+    H = {}
+    for i, v in enumerate(nodelist):
+        d = R[:, i]
+        H[v] = entropy(d)
+        H.copy()
+
+    return H
 
 
     

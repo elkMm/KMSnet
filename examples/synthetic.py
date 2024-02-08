@@ -18,22 +18,30 @@ from src.utils import *
 from src.states import *
 from src.generators import *
 from src.plotting import *
+from src.kms_graphs import *
 
 np.random.seed(567989)
 
 
-# V = range(1,7)
-# E = [(1, 2), (1, 2), (1, 3), (1, 5), (2, 2), (2, 3), (2, 4), (2, 5), (3, 4), (3, 6), (3, 6), (3, 6), (4, 4), (4, 6), (5, 2), (5, 3), (5, 4), (5, 6)]
+V = range(1,7)
+E = [(1, 2), (1, 2), (1, 3), (1, 5), (2, 2), (2, 3), (2, 4), (2, 5), (3, 4), (3, 6), (3, 6), (3, 6), (4, 4), (4, 6), (5, 2), (5, 3), (5, 4), (5, 6)]
 # # V = ['u', 'v', 'w', 'z', ]
 # # E = [('u', 'u'),('u', 'v'), ('u', 'v'), ('w', 'v'), ('w', 'u'), ('z', 'w')]
+# G1 = nx.complete_graph(10, create_using=nx.DiGraph())
 
-# G = nx.MultiDiGraph()
+# E1 = list(G1.edges)
+# # E1b = [(e[1], e[0]) for e in E1]
+
+
+
+G = nx.MultiDiGraph()
 # G.add_nodes_from(V)
-# G.add_edges_from(E)
+G.add_edges_from(E)
+# G_bar = conjugate_graph(G)
 # G = conditional_random_multi_digraph(20, .35, .12)
-G = nx.fast_gnp_random_graph(100, .02, directed=True, seed=56789)
+# G = nx.fast_gnp_random_graph(100, .02, directed=True, seed=56789)
 # G = scale_free_digraph(20)
-# draw_digraph(G)
+# draw_multi_digraph(G)
 # plt.show()
 # A = directed_multigraph_adjacency_matrix(G)
 # print(critical_inverse_temperature(G))
@@ -51,17 +59,17 @@ G = nx.fast_gnp_random_graph(100, .02, directed=True, seed=56789)
 # plt.show()
 beta_c = critical_inverse_temperature(G) # 3.39842857192179
 
-## Ground states are around: 10 * beta_c + 1.7763
-beta_gd = 10 * beta_c + (52.265/100) * beta_c
-beta_gd = 10.5 * beta_c
+# ## Ground states are around: 10 * beta_c + 1.7763
+# beta_gd = 10 * beta_c + (52.265/100) * beta_c
+# beta_gd = 10.5 * beta_c
 
-beta_min = beta_c + .0000001
+beta_min = beta_c + .01
 
-beta = beta_c + 10.6
+beta = 100*(beta_c + .0006)
 
-## Reference beta: 1.8
+# ## Reference beta: 1.8
 
-epsilon = (1.7/100) * beta 
+# epsilon = (1.7/100) * beta 
 
 
 
@@ -96,35 +104,18 @@ epsilon = (1.7/100) * beta
 # print(stats.cramervonmises_2samp(sample1, sample2))
 # print(stats.cramervonmises_2samp(KMS1[1], KMS2[1]))
 # print(beta)
+# entropy_thresh, w_thresh, KMSemit = beta_kms_digraph(G, 20*beta)
 
-# Gibbs = gibbs_profile(G, beta)
-# x = Gibbs[0]
-# ax = plt.gca()
-# plt.imshow(Gibbs[1], cmap='seismic')
-# ax.set_xticks(range(len(x)), labels=x)
-# ax.set_yticks(range(len(x)), labels=x)
-# plt.colorbar()
-# plt.show()
-# node_profile = node_gibbs_profile(G, 'c', beta)
-# profile_entropy = node_profile_entropy(G, 'a', beta)
-# entropies = node_profile_entropy_range(G, V, beta, beta + 3.)
-
-# print(beta_c)
-# # plot_node_emittance(G, ['u', 'v'], beta_min, beta, num=10000)
-# plot_node_profile_entropy(G, list(G.nodes)[:6], beta_min, beta, num=10000)
-# kms = KMS_emittance_dist_entropy_variation(G, beta_min, beta, num=100)
-# plt.plot(kms['range'], kms['entropy'])
-# plt.xlabel(f'1/ß')
-# plt.ylabel('Emittance distribution entropy')
-
-# plt.show()
-reception = avg_reception_probability_variation(G, G.nodes, beta_min, beta, num=50)
-
-data = pd.DataFrame(reception['avg_reception'], columns=G.nodes, index=[round(x, 4) for _, x in enumerate(reception['range'])])
-sns.clustermap(data,
-               metric='seuclidean',
-               row_cluster=False,
-               cmap='hot',
-    dendrogram_ratio=(.1, .2),
-    cbar_pos=(0, .2, .03, .4), figsize=(8, 6), annot_kws={'fontsize':12})
+# print(f'thresh: {thresh}')
+# print([(v, u, KMSemit.get_edge_data(v, u)['weight']) for v, u in KMSemit.edges])
+# print(entropy_thresh, w_thresh)
+# deg = dict(KMSemit.out_degree)
+# pos = nx.spring_layout(KMSemit)
+# nx.draw_networkx(KMSemit, pos=pos, arrows=True, nodelist=list(deg.keys()), node_size=[(v+.2) * 100 for v in deg.values()], labels={n: n for n in list(deg.keys())}, alpha=.6,horizontalalignment='left', verticalalignment='bottom', edge_color="tab:gray")
+# H = node_structural_entropy(G, nodelist=G.nodes)
+# xs = [n for n in H]
+# ys = [H[n] for _, n in enumerate(xs)]
+# plt.scatter(xs, ys)
+plot_node_kms_emittance_profile_entropy(G, G.nodes, beta_min, 10*beta, num=10000)
+plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='10', loc='upper left')
 plt.show()

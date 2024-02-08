@@ -1,6 +1,31 @@
 import numpy as np
 from scipy import stats
+from scipy.stats import entropy
 import networkx as nx
+
+TOL = 1e-2
+
+def conjugate_graph(G):
+    '''
+    Returns the conjugate of a directed multigraph.
+
+    Notes
+    -----
+    The conjugate of a directed graph *G=(V,E)* has the same
+    vertex set *V* and the edges are the elements of *E* with all the directions reversed. 
+    '''
+    V = G.nodes
+    E = G.edges
+
+    E_bar = []
+    for v, u, n in E:
+        E_bar += [(u, v, n),]
+
+    G_bar = nx.MultiDiGraph()
+    G_bar.add_nodes_from(V)
+    G_bar.add_edges_from(E_bar)
+
+    return G_bar
 
 
 def spectral_radius(matrix):
@@ -32,6 +57,31 @@ def adjacency_matrix(graph, nodes=None):
     #         A[i][j] = len(edges)
 
     return A
+
+
+def out_deg_ratio_matrix(graph, nodes=None):
+    '''
+    Returns the matrix whose (i,j)-entry is 
+    the ratio of the number of edges from j to i out of 
+    the out-degree of j. 
+    '''
+    if nodes is None:
+        nodes = list(graph.nodes)
+    A = adjacency_matrix(graph, nodes=nodes)
+    A = np.matrix.transpose(A)
+    N = len(nodes)
+    R = np.zeros((N, N))
+    
+    for j, v in enumerate(nodes):
+        a = sum(A[:, j])
+        if a > 0:
+            x = float(a) 
+        else:
+            x = 1.
+        for i, _ in enumerate(nodes):
+            R[i][j] = A[i][j] / x
+
+    return R
 
 
 def all_edges(edge_list, start_node, end_node):
@@ -155,3 +205,88 @@ def ks_2samp(sample1, sample2):
     en = m * n / (m + n)
     p_value = stats.kstwo.sf(ks_stat, np.round(en))
     return {"ks_stat": ks_stat, "p_value" : p_value}
+
+
+def get_threshold_from_ratio(array, ratio=.8):
+    '''Finds threshold from an array based on a percentage.'''
+
+    array = sorted(array, reverse=True)
+    n = len(array)
+    m = int(ratio * n)
+    v1 = array[m]
+    v2 = array[m+1]
+    return (v1 + v2)/2.
+
+def matrix_thresholded_from_ratio(matrix, ratio=.8, rescale_columns=True):
+    '''Returns thresholded a mtrix from a ratio.'''
+    n, m = matrix.shape
+    array = []
+    for l in np.matrix(matrix).tolist():
+        array += l
+    
+    threshold = get_threshold_from_ratio(array, ratio=ratio)
+    A = np.zeros((n, m))
+
+    for i in range(n):
+        for j in range(m):
+            el = matrix[i][j]
+            if (i != j) and (el >= threshold):
+                A[i][j] = el 
+            else:
+                A[i][j] = 0.
+
+    # normalize columns
+    if rescale_columns:
+        for k in range(m):
+            d = sum(list(A[:, k]))
+            if d > 0:
+                numer = d
+            else:
+                numer = 1.
+            for i in range(n):
+                A[:, k][i] = A[i][k] / numer
+
+    return threshold, A
+
+
+def column_stochastic_matrix_thresholded(matrix, entropy_ratio=.8, weight_ratio=.2):
+    '''Returns a spare matrix obtained by first 
+    thresholding the cloumn stochastic matrix based on the Shannon entropy  
+    of the columns, then threshold of the weights of the resulted matrix.'''
+
+    n, m = matrix.shape
+
+    col_entr = [entropy(matrix[:, i]) for i in range(m)]
+    entropy_thresh = get_threshold_from_ratio(col_entr, ratio=entropy_ratio)
+
+    # Select columns based on entropy
+    A1 = np.zeros((n, m))
+    
+    for j in range(m):
+        c = matrix[:, j]
+        if entropy(c) >= entropy_thresh:
+            A1[:, j] = c 
+        else:
+            A1[:, j] = np.zeros(n)
+    
+    # threshold A1 with ratio weight_ratio
+    w_thresh, A = matrix_thresholded_from_ratio(A1, ratio=weight_ratio)
+
+    return entropy_thresh, w_thresh, A
+
+
+
+def is_qual(val1, val2, tol=TOL):
+    v = abs(val1 - val2)
+    if float(v) <= tol:
+        return True
+    else:
+        return False
+
+        
+
+
+
+    
+
+

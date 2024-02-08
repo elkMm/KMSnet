@@ -17,18 +17,20 @@ from src.utils import *
 from src.states import *
 from src.generators import *
 from src.plotting import *
+from src.kms_graphs import *
 import seaborn as sns
 # import fitter
 from fitter import Fitter, get_common_distributions
 
 
-np.random.seed(5679)
+np.random.seed(5679546)
 
 
 
 neurons_f = '../data/NeuronType.xls'
 dataf = '../data/NeuronConnect.xls'
 name_neurons = '../data/name_neurons.txt'
+neuron_pos_f = open('../data/neuron_positions.csv', 'r', newline='')
 
 
 
@@ -44,6 +46,8 @@ f = open(name_neurons, 'r', newline='')
 n_lines = [re.sub('[ ]+', ',', line) for line in f.readlines()]
 n_rows = [line.strip().split(',') for line in n_lines]
 
+pos_rows = [l.strip().split(',') for l in neuron_pos_f.readlines()]
+neuron_positions = {row[0]: (float(row[2]), float(row[3])) for row in pos_rows}
 
 
 # neuron types
@@ -74,6 +78,7 @@ neurons = []
 node_colors = {}
 color_maps = []
 node_labels = {}
+
 
 neuron_cls = []
 
@@ -136,6 +141,8 @@ S = nx.MultiDiGraph()
 # S.add_nodes_from(neurons)
 S.add_edges_from(synapses)
 
+S_bar = conjugate_graph(S)
+
 
 # pos = nx.kamada_kawai_layout(S)
 # pos['AVAL'] = [-1,0]
@@ -145,9 +152,11 @@ S.add_edges_from(synapses)
 # plt.savefig('polySp_connectom.pdf', dpi=300, bbox_inches='tight')
 # plt.show()
 
-G = configuration_model_from_directed_multigraph(S)
+# G = configuration_model_from_directed_multigraph(S)
 
-beta_c = critical_inverse_temperature(G) # 3.39842857192179
+beta_c = critical_inverse_temperature(S) # 3.39842857192179
+
+# betabar_c = critical_inverse_temperature(S_bar)
 
 ## Ground states are around: 10 * beta_c + 1.7763
 # beta_gd = 10 * beta_c + (52.265/100) * beta_c
@@ -165,8 +174,8 @@ beta = 10.1*beta_c
 
 
 
-# KMS1 = KMS_emittance_dist(S, beta_min)
-# KMS2 = KMS_states(S, beta2)
+# KMS1 = KMS_emittance_dist(S, 1.1*beta_c)
+# # KMS2 = KMS_states(S, beta2)
 
 # sns.histplot(data=KMS1[1])
 # plt.show()
@@ -210,13 +219,28 @@ beta = 10.1*beta_c
 # plt.imshow(Gibbs[1], cmap='seismic')
 # plt.colorbar()
 
-nodelist = ['AVAL', 'AVAR', 'ADAL', 'ADAR', 'FLPL', 'FLPR', 'IL2L', 'IL2R', 'PVCL', 'PVCR'] \
-    + ['AVEL', 'AVER',\
-             'AVBL', 'AVBR', 'RIML', 'RIMR', 'RIAL', 'RIAR', 'RMDVL', 'RMDVR']
+# nodelist = ['AVAL', 'AVAR', 'ADAL', 'ADAR', 'FLPL', 'FLPR', 'RIAL', 'RIAR', 'IL2L', 'IL2R', 'AFDL', 'AFDR', 'DVA', 'DVB', 'DVC', 'DA01', 'DA09' , 'AIZL', 'AIZR'] \
+#     + ['AVEL', 'AVER', 'AIYL', 'AIYR', 'AWCL', 'AWCR',\
+#              'AVBL', 'AVBR', 'RIML', 'RIMR',  'RMDVL', 'RMDVR', 'PVCL', 'PVCR', 'PVDL', 'PVDR']
+VA_neurons = [f'VA0{i}' for i in range(1,10)] + ['VA10', 'VA11', 'VA12']
+VB_neurons = [f'VB0{i}' for i in range(1,10)] + ['VB10', 'VB11']
+VD_neurons = [f'VD0{i}' for i in range(1,10)] + ['VD10', 'VD11', 'VD12', 'VD13']
+DA_neurons = [f'DA0{i}' for i in range(1,10)]
+AS_neurons = [f'AS0{i}' for i in range(1, 10)] + ['AS10', 'AS11']
+DB_neurons = [f'DB0{i}' for i in range(1, 8)]
+DD_neurons = [f'DD0{i}' for i in range(1, 7)]
+
+other_motors = ['AVAL', 'AVAR', 'PVCL', 'PVCR', 'AVBL', 'AVBR']
+
+thermotaxis_neurons = ['AFDL', 'AFDR', 'AWCL', 'AWCR', 'AIYL', 'AIYR', 'AIZL', 'AIZR', 'RIAL', 'RIAR']
+chemotaxis_neurons = ['AIAL', 'AIAR', 'ASEL', 'ASER', 'PHAL', 'PHAR', 'PHBL', 'PHBR', 'ADFL', 'ADFR', 'ASIL', 'ASIR', 'ASKL', 'ASKR', 'ASGL', 'ASGR', 'ASJL', 'ASJR']
+
+GABA_neurons = DD_neurons + VD_neurons + ['RMED', 'RMEV', 'RMEL', 'RMER', 'AVL', 'DVB', 'RIS']
+
 # nodelist = list(S.nodes)
 # plot_node_entropy(S, nodelist, beta_min, beta, num=5000)
 # # draw_multi_digraph(G, layout=nx.kamada_kawai_layout)
-# plot_node_profile_entropy(S, S.nodes, beta_min, beta, num=100)
+plot_node_kms_emittance_profile_entropy(S, chemotaxis_neurons, .9*beta_c, beta, num=10000)
 # Gibbs = gibbs_profile(S, beta_c + .51)
 # cols = Gibbs[0]
 # mat = Gibbs[1]
@@ -226,7 +250,6 @@ nodelist = ['AVAL', 'AVAR', 'ADAL', 'ADAR', 'FLPL', 'FLPR', 'IL2L', 'IL2R', 'PVC
 #     data.copy()
 
 # data = pd.DataFrame(data, columns=cols, index=cols)
-
 
 
 # sns.clustermap(data, metric='jensenshannon', 
@@ -270,10 +293,35 @@ nodelist = ['AVAL', 'AVAR', 'ADAL', 'ADAR', 'FLPL', 'FLPR', 'IL2L', 'IL2R', 'PVC
 
 # plt.savefig('GibbsProfile_beta_c-.51.png', dpi=300, bbox_inches='tight')
 # plt.show()
+# e_thresh, w_thresh, KMSemit = beta_kms_digraph(S, .972*beta_c, entropy_ratio=.2, w_ratio=.01)
 
-RIVL_syn = [s for s in synapses if s[0] == 'RIVL']
+# print(f'thresh: {thresh}')
+# # print([(v, u, KMSemit.get_edge_data(v, u)['weight']) for v, u in KMSemit.edges])
+# A = nx.to_numpy_array(KMSemit, nodelist=KMSemit.nodes, dtype=np.float32)
+# deg = dict(KMSemit.out_degree)
+# # KMSAbs = nx.DiGraph()
+# # KMSAbs.add_edges_from([(u, v) for (v, u) in KMSemit.edges])
+# # pos = nx.random_layout(KMSemit)
+# pos = {n: neuron_positions[n] for n in S.nodes}
+# nx.draw_networkx(KMSemit, pos=pos, arrows=True, nodelist=list(deg.keys()), node_size=[(v+.3) * 20 for v in deg.values()], width=.4, with_labels=True, labels={n: n for n in list(deg.keys())}, node_color = [node_colors[n] for _, n in enumerate(list(deg.keys()))], alpha=.6,horizontalalignment='center', verticalalignment='center', edge_color="tab:gray", font_size=5)
+# # K = nx.MultiDiGraph()
+# # K.add_edges_from(KMSemit.edges)
+# # draw_multi_digraph(K, layout=nx.kamada_kawai_layout, node_colors={n: node_colors[n] for n in K.nodes})
+# # plt.savefig('./results/KMS-Absorbance_Beta_c.pdf', dpi=300, bbox_inches='tight')
+# deg_data = [x[1] for x in KMSemit.out_degree]
+# entro = kms_emittances_entropy(S, 1.0000001*beta_c)
+# sns.histplot(entro)
+# print(len(KMSemit.nodes))
+# plt.imshow(A)
+# plt.colorbar()
+# H = node_structural_entropy(S, nodelist=thermotaxis_neurons)
+# xs = [n for n in H]
+# ys = [H[n] for _, n in enumerate(xs)]
+# plt.scatter(xs, ys)
+plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='10', loc='upper left')
+plt.tight_layout()
+plt.savefig('./results/neuronClass/Chemotaxis_StructureAndEmittanceEntropy.pdf', dpi=300, bbox_inches='tight')
+# plt.show()
 
-print(RIVL_syn)
-
-
+# print(sorted(KMSemit.out_degree, key=lambda x: x[1], reverse=True)[:10])
 

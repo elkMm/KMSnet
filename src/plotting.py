@@ -1,14 +1,16 @@
 import matplotlib.pyplot as plt
 import seaborn as sns 
 from collections import defaultdict
-from distinctipy import get_colors
+from distinctipy import get_colors, color_swatch
+from .utils import is_qual
 from .states import (
     emittance_matrix,
-    gibbs_profile,
+    kms_emittance,
     node_emittance_variation,
-    node_profile_entropy_range,
-    node_profile_diversity_range,
-    KMS_emittance_dist_entropy_variation
+    node_kms_emittance_profile_entropy_range,
+    node_kms_emittance_profile_diversity_range,
+    KMS_emittance_dist_entropy_variation,
+    node_structural_entropy
 )
 
 
@@ -42,7 +44,7 @@ def plot_node_emittance(graph, nodelist, beta_min, beta_max, num=100, node_label
 
 
 
-def plot_node_profile_entropy(graph, nodelist, beta_min, beta_max, num=50, node_labels=None, font_size=12):
+def plot_node_kms_emittance_profile_entropy(graph, nodelist, beta_min, beta_max, num=50, node_labels=None, font_size=12):
 
     plt.rcParams.update({
         "figure.autolayout": True,
@@ -51,11 +53,14 @@ def plot_node_profile_entropy(graph, nodelist, beta_min, beta_max, num=50, node_
         "font.size": font_size
     })
 
-    H = node_profile_entropy_range(graph, nodelist, beta_min, beta_max, num=num)
+    H = node_kms_emittance_profile_entropy_range(graph, nodelist, beta_min, beta_max, num=num)
 
-    x = H['range']
+    struc_entropy = node_structural_entropy(graph, nodelist=nodelist)
 
-    colors = get_colors(len(nodelist))
+    xs = H['range']
+
+    colors = get_colors(len(nodelist), pastel_factor=.5)
+
     
     labels = defaultdict(lambda: '')
     if node_labels != None:
@@ -63,19 +68,25 @@ def plot_node_profile_entropy(graph, nodelist, beta_min, beta_max, num=50, node_
             labels[n] = node_labels[n]
     
     for i, u in enumerate(nodelist):
-        y = H[u]
+        ys = H[u]
+        s = struc_entropy[u]
         label = u
         color = colors[i]
         if labels[u] != '':
             label = labels[u]
-        plt.plot(x, y, label=label, color=color)
+        plt.plot(xs, ys, label=label, color=color)
+
+        # find and plot the structural entropy of node u
+        for ind, x in enumerate(xs):
+            if is_qual(s, ys[ind]):
+                plt.scatter(xs[ind], s, color=color)
 
     xlabel = f'Temperature 1/ß'    
     plt.xlabel(xlabel)
     plt.ylabel('Node profile entropy')
     # plt.legend()
 
-def plot_node_profile_diversity(graph, nodelist, beta_min, beta_max, num=50, node_labels=None, font_size=12):
+def plot_node_kms_emittance_profile_diversity(graph, nodelist, beta_min, beta_max, num=50, node_labels=None, font_size=12):
 
     plt.rcParams.update({
         "figure.autolayout": True,
@@ -84,7 +95,8 @@ def plot_node_profile_diversity(graph, nodelist, beta_min, beta_max, num=50, nod
         "font.size": font_size
     })
 
-    diversity = node_profile_diversity_range(graph, nodelist, beta_min, beta_max, num=num)
+    diversity = node_kms_emittance_profile_diversity_range(graph, nodelist, beta_min, beta_max, num=num)
+
 
     x = diversity['range']
     

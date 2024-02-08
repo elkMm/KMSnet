@@ -130,6 +130,8 @@ kms-env/
 
 # mkdocs documentation
 /site
+/results
+results/
 
 # mypy
 .mypy_cache/
