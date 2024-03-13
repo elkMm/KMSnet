@@ -10,9 +10,95 @@ from mpl_toolkits.mplot3d import proj3d
 import networkx as nx
 
 
-def draw_multi_digraph(G, pos=None, layout=nx.spring_layout, node_shape='round', node_colors=None, node_labels=None, font_size=12, figsize=(10,10), ax=None):
+def draw_multi_digraph(G, pos=None, layout=nx.spring_layout, node_shape='round', node_size=.4, node_colors=None, node_labels=None, edgecolor='tab:gray', font_size=12, figsize=(10,10), ax=None):
     '''
-    Draw a directed graph.
+    Draw a directed multigraph.
+
+    Parameters
+    ----------
+    G : a networkx MultiDiGraph object
+    node_shape: str
+        `circle` or `polygon`
+    '''
+
+    plt.rcParams.update({
+        "figure.autolayout": True,
+        "text.usetex": True,
+        "font.family": "Times New Roman",
+        "font.size": font_size
+    })
+
+    # pos = nx.kamada_kawai_layout(G)
+    if pos is None:
+        pos = layout(G)
+
+    fig = plt.figure(figsize=figsize)
+    # fig, ax = plt.subplots()
+
+    
+    if ax is None:
+        ax = plt.gca()
+    # ax = plt.gca()
+    ax.set_axis_off()
+    xs = []
+    ys = []
+
+    color_map = defaultdict(lambda: 'white')
+    if node_colors != None:
+        for k in node_colors:
+            color_map[k] = node_colors[k]
+
+    labels = defaultdict(lambda: '')
+    if node_labels != None:
+        for n in node_labels:
+            labels[n] = node_labels[n]
+    
+
+    draw_node = round_node
+    width = node_size
+    if node_shape == 'polygon':
+        draw_node = polygonal_node
+        width = node_size
+
+    for node in pos:
+        x, y = pos[node]
+        draw_node((x,y), facecolor=color_map[node], width=width, ax=ax)
+        ax.annotate(labels[node], (x + .2, y + .1), fontsize=font_size, zorder=5)
+        xs.append(x)
+        ys.append(y)
+   
+    edges = G.edges
+
+    for edge in edges:
+        draw_curved_edge(edge, color=edgecolor, pos=pos, ax=ax)
+
+    if node_labels != None:
+        # Draw node labels
+        nx.draw_networkx_labels(
+            G, 
+            pos=pos, 
+            labels=node_labels, 
+            font_size=font_size, 
+            font_color='k', 
+            # font_family='sans-serif', 
+            font_weight='normal', 
+            horizontalalignment='left', 
+            verticalalignment='bottom', 
+            ax=ax
+        )
+
+
+    fig.tight_layout()
+    ax.set_aspect('equal')
+    plt.xlim([min(xs)-3., max(xs)+3.])
+    plt.ylim([min(ys)-3., max(ys)+3.])
+    # plt.show()
+
+
+
+def draw_weighted_digraph(G, pos=None, layout=nx.spring_layout, node_shape='round', node_size=.4, node_colors=None, node_labels=None, edgecolor='tab:gray', font_size=12, figsize=(10,10), ax=None):
+    '''
+    Draw a directed weighted digraph.
 
     Parameters
     ----------
@@ -47,46 +133,54 @@ def draw_multi_digraph(G, pos=None, layout=nx.spring_layout, node_shape='round',
     if node_colors != None:
         for k in node_colors:
             color_map[k] = node_colors[k]
-
+    
+    labels = defaultdict(lambda: '')
+    if node_labels != None:
+        for n in node_labels:
+            labels[n] = node_labels[n]
     
     draw_node = round_node
-    width = .02
+    width = node_size
     if node_shape == 'polygon':
         draw_node = polygonal_node
-        width = .03
+        width = node_size
 
     for node in pos:
         x, y = pos[node]
         draw_node((x,y), facecolor=color_map[node], width=width, ax=ax)
+        ax.annotate(labels[node], (x + .2, y + .1), fontsize=font_size, zorder=5)
         xs.append(x)
         ys.append(y)
    
-    edges = G.edges
+    edges = list(G.edges(data=True))
 
-    for edge in edges:
-        draw_curved_edge(edge, pos=pos, ax=ax)
+    for w_edge in edges:
+        edge = (w_edge[0], w_edge[1], 0)
+        weight = 40 * w_edge[2]['weight']
+        draw_curved_edge(edge, width=weight, alpha=1., color=edgecolor, pos=pos, ax=ax)
 
-    if node_labels != None:
-        # Draw node labels
-        nx.draw_networkx_labels(
-            G, 
-            pos=pos, 
-            labels=node_labels, 
-            font_size=font_size, 
-            font_color='k', 
-            # font_family='sans-serif', 
-            font_weight='normal', 
-            horizontalalignment='left', 
-            verticalalignment='bottom', 
-            ax=ax
-        )
+    # if node_labels != None:
+    #     # Draw node labels
+    #     nx.draw_networkx_labels(
+    #         G, 
+    #         pos=pos, 
+    #         labels=node_labels, 
+    #         font_size=font_size, 
+    #         font_color='k', 
+    #         # font_family='sans-serif', 
+    #         font_weight='normal', 
+    #         horizontalalignment='left', 
+    #         verticalalignment='bottom', 
+    #         ax=ax
+    #     )
 
 
     fig.tight_layout()
     ax.set_aspect('equal')
-    plt.xlim([min(xs)-.4, max(xs)+.4])
-    plt.ylim([min(ys)-.4, max(ys)+.4])
-    # plt.show()
+    plt.xlim([min(xs)-3., max(xs)+3.])
+    plt.ylim([min(ys)-3., max(ys)+3.])
+
+
 
 
     
@@ -179,7 +273,7 @@ def _curved_edge(edge, color='blue', width=0.3, alpha=.6, zorder=1, pos=None):
     x0,y0 = pos[n0]
     x1,y1 = pos[n1]
     style = "Simple, head_width=6, head_length=8"
-    angle = (.5 + int(route)/45.)
+    angle = (.1 + int(route)/100.)
     arc = FancyArrowPatch((x0,y0),(x1,y1), linestyle='-', arrowstyle=style, color=color, alpha=alpha, connectionstyle='arc3,rad=' + f'{angle}', zorder=zorder, lw=width)
     return arc
 

@@ -68,18 +68,22 @@ def out_deg_ratio_matrix(graph, nodes=None):
     if nodes is None:
         nodes = list(graph.nodes)
     A = adjacency_matrix(graph, nodes=nodes)
-    A = np.matrix.transpose(A)
+    A = A.T
     N = len(nodes)
     R = np.zeros((N, N))
     
-    for j, v in enumerate(nodes):
+    for j, _ in enumerate(nodes):
         a = sum(A[:, j])
-        if a > 0:
-            x = float(a) 
-        else:
+        x = float(a)
+        if a == 0.:
             x = 1.
-        for i, _ in enumerate(nodes):
-            R[i][j] = A[i][j] / x
+        for i, u in enumerate(nodes):
+            R[i][j] = float(A[i][j]) / x
+        ss = sum(R[:, j])
+        if ss == 0.:
+            ss = 1.
+        
+        R[:, j] = R[:, j] / float(ss)
 
     return R
 
@@ -207,6 +211,35 @@ def ks_2samp(sample1, sample2):
     return {"ks_stat": ks_stat, "p_value" : p_value}
 
 
+def js_divergence(x,y):
+    '''Calculate the Jensen-Shannon divergence between two probability distributions'''
+
+    n = len(x)
+    m = [(x[i] + y[i]) / 2. for i in range(n)]
+
+    jsd = entropy(m) - (entropy(x) + entropy(y)) / 2. 
+
+    return jsd
+
+
+def fidelity(x, y):
+    '''Calculate the fidelity of two probability distributions.
+
+    Given two probability distributions x and y, their fidelity if given by
+
+    .. math::
+
+       F(x,y) = \\left(\\sum\\sqrt{x_iy_i}\\right)^2
+    
+    '''
+    F = 0.
+    for i in range(len(x)):
+        F += np.sqrt(x[i] * y[i])
+
+    return F ** 2
+
+
+
 def get_threshold_from_ratio(array, ratio=.8):
     '''Finds threshold from an array based on a percentage.'''
 
@@ -283,10 +316,32 @@ def is_qual(val1, val2, tol=TOL):
     else:
         return False
 
-        
 
+def get_true_val(val, tol=1e-5):
+    x = 0.
+    if val > tol:
+        x = val
+    return x    
 
+def nonzero_sum(x):
+    '''Returns sum of the array or 1 if the sum is zero.'''
+    s = sum(x)
+    if s == 0.:
+        s = 1.
+    return s
 
-    
+def remove_ith(x, i):
+    '''Remove ith element in array and then normalize.'''
+    x[i] = 0.
+    s = nonzero_sum(x)
+    x = [a / float(s) for _, a in enumerate(x)]
 
+    return x
 
+def temperature_range(beta_min, beta_max, num=50):
+    if beta_min == beta_max:
+        interval = [1./beta_min]
+    else:
+        interval = list(np.linspace(1./beta_max, 1./beta_min, num=num))
+    return interval
+       

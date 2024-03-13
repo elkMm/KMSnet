@@ -5,9 +5,11 @@ from numpy.linalg import matrix_power, norm, inv
 from scipy.stats import entropy
 from src.utils import *
 
+TOL = 1e-5
+
 def critical_inverse_temperature(graph):
     matrix = adjacency_matrix(graph)
-    rc = spectral_radius(np.matrix.transpose(matrix))
+    rc = spectral_radius(matrix)
     return np.log(rc)
 
 
@@ -44,6 +46,7 @@ def node_emittance_variation(graph, nodelist, beta_min, beta_max, num=100):
     '''Compute the emittance of each node in the 
     nodelist and for each value of beta ranging from beta_min to beta_max.'''
     nodes = list(graph.nodes)
+    
     if beta_min == beta_max:
         interval = [beta_min]
     else:
@@ -73,20 +76,24 @@ def emittance_vector(graph, beta):
 
 
 def kms_emittance(graph, beta):
-    '''Returns the KMS  emittance of the directed multigraph at inverse temperature beta.'''
+    '''Returns the KMS emittance matrix of the directed multigraph at inverse temperature beta.'''
     nodes = list(graph.nodes)
     N = len(nodes)
-    eMat = emittance_matrix(graph, beta, nodes=nodes)
-    eMat = np.matrix.transpose(eMat)
+    B = emittance_matrix(graph, beta, nodes=nodes)
+    # eMat = eMat.T
+
 
     Z = np.zeros((N,N))
-    
-    for i, v in enumerate(nodes):
-        yv = sum([eMat[i][j] for j, _ in enumerate(nodes)])
-        for k, _ in enumerate(nodes):
-            Z[i][k] = eMat[i][k] / (1. * yv)
 
-    return nodes, np.matrix.transpose(Z)
+    for j, _ in enumerate(nodes):
+        Y = B[:, j]
+        yv = nonzero_sum(Y)
+        Zv = [x / yv for _, x in enumerate(Y)]
+        Zv = [get_true_val(x, tol=TOL) for _, x in enumerate(Zv)]
+        s = nonzero_sum(Zv)
+        Z[:, j] = [x / s for _, x in enumerate(Zv)]
+    
+    return nodes, Z
 
 def kms_emittances_entropy(graph, beta):
     '''Returns the entropies of all the node KMS emittances.'''
@@ -109,21 +116,24 @@ def node_kms_emittance_profile(graph, node, beta):
 
     return node_profile
 
+def node_kms_emittance_profile_variation(graph,  nodelist, beta_min, beta_max, num=50):
+    '''Return KMS emittances of nodes within a given interval.'''
 
-def subnet_kms_emittance(graph, nodelist, beta):
-    '''Returns the sub-matrix correspond to the KMS emittance profile of the subnetwork
-    defined by the given nodelist.'''
-    nodes, Z = kms_emittance(graph, beta)
-    N = len(nodelist)
-    W = np.zeros((N, N))
+    interval = temperature_range(beta_min, beta_max, num=num)
+    
+    KMSProfiles = {'range': interval} | {node: [] for node in nodelist}
+    
+    for _, T in enumerate(interval):
+        beta = 1./T
+        nodes, Z = kms_emittance(graph, beta)
+        for u in nodelist:
+            i = nodes.index(u)
+            profile = Z[:, i]
+            KMSProfiles[u] += [profile,]
+            KMSProfiles.copy()
 
-    for i, u in enumerate(nodelist):
-        ii = nodes.index(u)
-        for j, v in enumerate(nodelist):
-            jj = nodes.index(v)
-            W[i][j] = Z[ii][jj]
+    return KMSProfiles
 
-    return nodelist, W
 
 def node_kms_emittance_profile_entropy(graph, node, beta):
     node_profile = node_kms_emittance_profile(graph, node, beta)
@@ -135,22 +145,36 @@ def node_kms_emittance_profile_entropy(graph, node, beta):
 def node_kms_emittance_profile_entropy_range(graph, nodelist, beta_min, beta_max, num=50):
     '''Compute the entropy of Gibbs profiles for each node in the 
     nodelist and for each value of beta in the range.'''
-    if beta_min == beta_max:
-        interval = [1./beta_min]
-    else:
-        interval = list(np.linspace(1./beta_max, 1./beta_min, num=num))
+    # if beta_min == beta_max:
+    #     interval = [1./beta_min]
+    # else:
+    #     interval = list(np.linspace(1./beta_max, 1./beta_min, num=num))
     
+    # H = {'range': interval} | {node: [] for node in nodelist}
+    
+    # for _, T in enumerate(interval):
+    #     beta = 1./T
+    #     nodes, Z = kms_emittance(graph, beta)
+    #     for u in nodelist:
+    #         i = nodes.index(u)
+    #         profile = Z[:, i]
+    #         # profile[i] = 0.
+    #         # s = sum(profile)
+    #         # if s == 0.:
+    #         #     s = 1.
+    #         # profile = [x / float(s) for _, x in enumerate(profile)]
+    #         H[u] += [entropy(profile),]
+    #         H.copy()
+    KMS = node_kms_emittance_profile_variation(graph, nodelist, beta_min, beta_max, num=num)
+    interval = KMS['range']
+
     H = {'range': interval} | {node: [] for node in nodelist}
-    
-    for _, T in enumerate(interval):
-        beta = 1./T
-        nodes, Z = kms_emittance(graph, beta)
+
+    for i, _ in enumerate(interval):
         for u in nodelist:
-            i = nodes.index(u)
-            profile = Z[:, i]
+            profile = KMS[u][i]
             H[u] += [entropy(profile),]
             H.copy()
-
     return H
 
 
@@ -163,7 +187,7 @@ def node_kms_emittance_profile_diversity_range(graph, nodelist, beta_min, beta_m
 
     return diversity
 
-def avg_node_kms_emittance_profile(graph, beta):
+def avg_node_kms_emittance(graph, beta):
     V = graph.nodes
     N = len(V)
     Z = kms_emittance(graph, beta)[1]
@@ -174,10 +198,7 @@ def avg_node_kms_emittance_profile(graph, beta):
 
 def avg_node_kms_emittance_profile_variation(graph, beta_min, beta_max, num=50):
     '''Returns the variation average Gibbs node profile for each beta in the range.'''
-    if beta_min == beta_max:
-        interval = [1./beta_min]
-    else:
-        interval = np.linspace(1./beta_max, 1./beta_min, num=num)
+    interval = temperature_range(beta_min, beta_max, num=num)
     
     V = list(graph.nodes)
     N = len(V)
@@ -224,14 +245,11 @@ def avg_reception_probability_variation(graph, nodelist, beta_min, beta_max, num
 def states_kl_variation(graph, nodelist, beta_min, beta_max, num=50):
     '''Return the Kulback-Liebler distance (relative entropy) between the KMS states
     corresponding to each node in nodelist.'''
-    if beta_min == beta_max:
-        interval = [1./beta_min]
-    else:
-        interval = list(np.linspace(1./beta_max, 1./beta_min, num=num))
+    interval = temperature_range(beta_min, beta_max, num=num)
 
     kl_distances = {}
-    for _, T in interval:
-        nodes, W = subnet_kms_emittance(graph, nodelist, 1./T)
+    # for _, T in interval:
+      
 
 
 
@@ -244,8 +262,6 @@ def node_reception_profile(graph, node, beta):
     reception_profile = Z[i, :]/(1. * len(nodes))
 
     return reception_profile
-
-
 
 
 
@@ -287,15 +303,11 @@ def KMS_emittance_dist(graph, beta):
 
 
 def KMS_emittance_dist_entropy_variation(graph, beta_min, beta_max, num=50):
-    if beta_min == beta_max:
-        interval = [1./beta_min]
-    else:
-        interval = list(np.linspace(1./beta_max, 1./beta_min, num=num))
-
+    interval = temperature_range(beta_min, beta_max, num=num)
 
     H = []    
     
-    for i, T in enumerate(interval):
+    for _, T in enumerate(interval):
         beta = 1./T
         emittance = emittance_vector(graph, beta)
 
@@ -311,21 +323,34 @@ def KMS_emittance_dist_entropy_variation(graph, beta_min, beta_max, num=50):
     return {'range': interval, 'entropy': H}
 
 
+def node_structural_state(graph, nodelist=None):
+    nodes = list(graph.nodes)
 
+    if nodelist == None:
+        nodelist = nodes
+    R = out_deg_ratio_matrix(graph, nodes=nodes)
+    SS = {}
+    for i, v in enumerate(nodelist):
+        SS[v] = R[:, i]
+        SS.copy()
+
+    return nodes, SS
+    
 def node_structural_entropy(graph, nodelist=None):
     '''
     Returns the entropy of the column corresponding to 
     each node of nodelist in the out-degree-ratio matrix
     obrained by the functipn out_deg_ratio_matrix of the graph.
     '''
-    nodes = list(graph.nodes)
+    # nodes = list(graph.nodes)
 
-    if nodelist == None:
-        nodelist = nodes
-    R = out_deg_ratio_matrix(graph, nodes=nodes)
+    # if nodelist == None:
+    #     nodelist = nodes
+    # R = out_deg_ratio_matrix(graph, nodes=nodes)
+    SS = node_structural_state(graph, nodelist=nodelist)[1]
     H = {}
-    for i, v in enumerate(nodelist):
-        d = R[:, i]
+    for _, v in enumerate(nodelist):
+        d = SS[v]
         H[v] = entropy(d)
         H.copy()
 

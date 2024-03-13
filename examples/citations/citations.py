@@ -15,6 +15,7 @@ sys.path.append( cn_module_dir )
 from src.visuals import *
 from src.utils import *
 from src.states import *
+from src.plotting import *
 from src.generators import *
 import seaborn as sns
 # import fitter
@@ -45,14 +46,15 @@ G.add_edges_from(E)
 # draw_multi_digraph(G, layout=nx.kamada_kawai_layout)
 beta_c = critical_inverse_temperature(G) # 3.39842857192179
 
+beta_min = beta_c + .00001
 
 beta = 5*beta_c
+print(beta_c)
 
-KMS = KMS_states(G, beta)
+plot_sates_fidelity(G, list(G.nodes), beta_min, beta, num=10)
+
+
+# KMS = KMS_states(G, beta)
 # KMS2 = KMS_states(S, beta2)
-x = KMS[0]
-y = KMS[1]
 
-# print(beta_c)
-sns.histplot(data=y)
 plt.show()

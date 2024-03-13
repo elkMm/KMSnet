@@ -33,4 +33,6 @@ matrix = np.array([
 
 # print(f'threshold: {epsilon}\n')
 # print(A)
-print(is_qual(.2, .199999))
+x = [.99, .01, 0.]
+y = [1., 0., 0.]
+print(fidelity(x, y))

@@ -1,6 +1,7 @@
 '''Base functions to construct the KMS directed weighted graphs
 from a directed multigraph.'''
 import networkx as nx
+from itertools import product
 from .states import *
 from .utils import matrix_thresholded_from_ratio, column_stochastic_matrix_thresholded
 
@@ -27,6 +28,47 @@ def beta_kms_digraph(graph, beta, entropy_ratio=.3, w_ratio=.2):
     G.add_weighted_edges_from(weighted_edges)
 
     return entropy_thresh, w_thresh, G
+
+
+def kms_subgraph_adj_mat(graph, beta, nodelist=None):
+    '''Returns the sub-matrix corresponding to the KMS emittance profile of the subnetwork
+    defined by the given nodelist.'''
+    nodes, Z = kms_emittance(graph, beta)
+    if nodelist == None:
+        nodelist = nodes
+    N = len(nodelist)
+    W = np.zeros((N, N))
+
+    for i, u in enumerate(nodelist):
+        ii = nodes.index(u)
+        for j, v in enumerate(nodelist):
+            jj = nodes.index(v)
+            W[i][j] = Z[ii][jj]
+
+    return nodelist, W
+
+
+def kms_subgraph(graph, beta, nodelist=None):
+    '''Returns the weighted directed subgraph obtained from the kms_subgraph_adj_mat.'''
+    nodes, W = kms_subgraph_adj_mat(graph, beta, nodelist=nodelist)
+
+    K = nx.DiGraph()
+    K.add_nodes_from(nodes)
+    E = []
+    
+
+    for i, target in enumerate(nodes):
+        for j, source in enumerate(nodes):
+            w = W[i][j]
+            if w > 0.:
+                E += [(source, target, w)]
+                # K.add_edge(source, target, weight=w)
+    K.add_weighted_edges_from(E)
+
+    return K
+
+
+
 
 
 
