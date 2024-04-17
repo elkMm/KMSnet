@@ -33,6 +33,14 @@ matrix = np.array([
 
 # print(f'threshold: {epsilon}\n')
 # print(A)
-x = [.99, .01, 0.]
-y = [1., 0., 0.]
-print(fidelity(x, y))
+# x = [.99, .01, 0.]
+# y = [1., 0., 0.]
+# print(fidelity(x, y))
+
+# fig, ax = plt.subplots()
+# fig.patch.set_visible(False)
+# ax.axis('off')
+# ax.axis('tight')
+# ax.table(cellText=matrix, loc='center')
+
+# plt.show()

@@ -73,16 +73,11 @@ def out_deg_ratio_matrix(graph, nodes=None):
     R = np.zeros((N, N))
     
     for j, _ in enumerate(nodes):
-        a = sum(A[:, j])
-        x = float(a)
-        if a == 0.:
-            x = 1.
+        s = nonzero_sum(A[:, j])
         for i, u in enumerate(nodes):
-            R[i][j] = float(A[i][j]) / x
-        ss = sum(R[:, j])
-        if ss == 0.:
-            ss = 1.
-        
+            R[i][j] = float(A[i][j]) / s
+
+        ss = nonzero_sum(R[:, j])
         R[:, j] = R[:, j] / float(ss)
 
     return R
@@ -337,6 +332,11 @@ def remove_ith(x, i):
     x = [a / float(s) for _, a in enumerate(x)]
 
     return x
+
+def normalize(x):
+    s = nonzero_sum(x)
+    return [a / float(s) for _, a in enumerate(x)]
+
 
 def temperature_range(beta_min, beta_max, num=50):
     if beta_min == beta_max:

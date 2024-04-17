@@ -23,17 +23,19 @@ def draw_multi_digraph(G, pos=None, layout=nx.spring_layout, node_shape='round',
 
     plt.rcParams.update({
         "figure.autolayout": True,
+        "figure.figsize": figsize,
         "text.usetex": True,
-        "font.family": "Times New Roman",
-        "font.size": font_size
+        "font.family": "Helvetica",
+        "font.size": font_size,
+        "font.weight": "bold"
     })
 
     # pos = nx.kamada_kawai_layout(G)
     if pos is None:
         pos = layout(G)
 
-    fig = plt.figure(figsize=figsize)
-    # fig, ax = plt.subplots()
+    # fig = plt.figure(figsize=figsize)
+    fig, ax = plt.subplots()
 
     
     if ax is None:
@@ -72,20 +74,20 @@ def draw_multi_digraph(G, pos=None, layout=nx.spring_layout, node_shape='round',
     for edge in edges:
         draw_curved_edge(edge, color=edgecolor, pos=pos, ax=ax)
 
-    if node_labels != None:
-        # Draw node labels
-        nx.draw_networkx_labels(
-            G, 
-            pos=pos, 
-            labels=node_labels, 
-            font_size=font_size, 
-            font_color='k', 
-            # font_family='sans-serif', 
-            font_weight='normal', 
-            horizontalalignment='left', 
-            verticalalignment='bottom', 
-            ax=ax
-        )
+    # if node_labels != None:
+    #     # Draw node labels
+    #     nx.draw_networkx_labels(
+    #         G, 
+    #         pos=pos, 
+    #         labels=node_labels, 
+    #         font_size=font_size, 
+    #         font_color='k', 
+    #         # font_family='sans-serif', 
+    #         font_weight='normal', 
+    #         horizontalalignment='left', 
+    #         verticalalignment='bottom', 
+    #         ax=ax
+    #     )
 
 
     fig.tight_layout()
@@ -109,17 +111,19 @@ def draw_weighted_digraph(G, pos=None, layout=nx.spring_layout, node_shape='roun
 
     plt.rcParams.update({
         "figure.autolayout": True,
+        "figure.figsize": figsize,
         "text.usetex": True,
-        "font.family": "Times New Roman",
-        "font.size": font_size
+        "font.family": "Helvetica",
+        "font.size": font_size,
+        "font.weight": "bold"
     })
 
     # pos = nx.kamada_kawai_layout(G)
     if pos is None:
         pos = layout(G)
 
-    fig = plt.figure(figsize=figsize)
-    # fig, ax = plt.subplots()
+    # fig = plt.figure(figsize=figsize)
+    fig, ax = plt.subplots()
 
     
     if ax is None:
@@ -148,7 +152,7 @@ def draw_weighted_digraph(G, pos=None, layout=nx.spring_layout, node_shape='roun
     for node in pos:
         x, y = pos[node]
         draw_node((x,y), facecolor=color_map[node], width=width, ax=ax)
-        ax.annotate(labels[node], (x + .2, y + .1), fontsize=font_size, zorder=5)
+        ax.annotate(labels[node], xy=(x, y), fontsize=font_size, weight='bold', zorder=5, ha='center', va='center')
         xs.append(x)
         ys.append(y)
    
@@ -156,7 +160,7 @@ def draw_weighted_digraph(G, pos=None, layout=nx.spring_layout, node_shape='roun
 
     for w_edge in edges:
         edge = (w_edge[0], w_edge[1], 0)
-        weight = 40 * w_edge[2]['weight']
+        weight = 4 * w_edge[2]['weight']
         draw_curved_edge(edge, width=weight, alpha=1., color=edgecolor, pos=pos, ax=ax)
 
     # if node_labels != None:
@@ -177,8 +181,8 @@ def draw_weighted_digraph(G, pos=None, layout=nx.spring_layout, node_shape='roun
 
     fig.tight_layout()
     ax.set_aspect('equal')
-    plt.xlim([min(xs)-3., max(xs)+3.])
-    plt.ylim([min(ys)-3., max(ys)+3.])
+    plt.xlim([min(xs)-2., max(xs)+2.])
+    plt.ylim([min(ys)-2., max(ys)+2.])
 
 
 
@@ -238,7 +242,7 @@ def polygonal_node(xy, width=1., edgecolor='Black', facecolor='tab:blue', zorder
 
 
 
-def round_node(xy, facecolor='yellow', width=0.06, edgecolor='Black', zorder=4, alpha=1, ax=None):
+def round_node(xy, facecolor='yellow', width=0.06, edgecolor='dimgray', zorder=4, alpha=.6, ax=None):
     '''Draw a node given a dictionary of node positions.'''
     # if ax is None:
     #     ax = plt.gca()
@@ -247,7 +251,7 @@ def round_node(xy, facecolor='yellow', width=0.06, edgecolor='Black', zorder=4, 
     ax.add_patch(ell)
 
 
-def draw_curved_edge(edge, color='tab:gray', width=.2, alpha=0.5, zorder=3, pos=None, ax=None):
+def draw_curved_edge(edge, color='tab:gray', width=.2, alpha=0.4, zorder=3, pos=None, ax=None):
     '''Draws curved edge given the source and range positions of the edge'''
 
     # if ax is None:
@@ -257,13 +261,11 @@ def draw_curved_edge(edge, color='tab:gray', width=.2, alpha=0.5, zorder=3, pos=
     ax.add_patch(arc)
 
 
-def _node(xy, color='tab:red', width=0.02, edgecolor='Black', zorder=5, alpha=0.6):
+def _node(xy, color='tab:red', width=0.02, edgecolor='tab:gray', zorder=5, alpha=0.6):
     '''Plots an ellipse to represent a node given a dictionary of node positions.'''
 
-    ell = Circle(xy, radius=width/2., zorder=zorder, lw=0.5,edgecolor=edgecolor, facecolor=color, alpha=alpha)
+    ell = Circle(xy, radius=width/2., zorder=zorder, lw=0.5, edgecolor=edgecolor, facecolor=color, alpha=alpha)
     return ell
-
-
 
 
 def _curved_edge(edge, color='blue', width=0.3, alpha=.6, zorder=1, pos=None):
@@ -272,7 +274,9 @@ def _curved_edge(edge, color='blue', width=0.3, alpha=.6, zorder=1, pos=None):
     n0, n1, route = edge
     x0,y0 = pos[n0]
     x1,y1 = pos[n1]
-    style = "Simple, head_width=6, head_length=8"
+    head_width = 4 * (1. + width)
+    head_length = 8 * (1. + width)
+    style = f'Simple, head_width={head_width}, head_length={head_length}'
     angle = (.1 + int(route)/100.)
     arc = FancyArrowPatch((x0,y0),(x1,y1), linestyle='-', arrowstyle=style, color=color, alpha=alpha, connectionstyle='arc3,rad=' + f'{angle}', zorder=zorder, lw=width)
     return arc

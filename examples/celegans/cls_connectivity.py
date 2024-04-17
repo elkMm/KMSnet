@@ -21,6 +21,8 @@ from src.states import *
 from src.generators import *
 from src.plotting import *
 from src.kms_graphs import *
+from src.gen_colors import *
+
 
 import seaborn as sns
 
@@ -59,6 +61,11 @@ thermosensory_circuit = ['AIY', 'AIZ', 'AIA', 'AIB', 'RIF', 'AVD', 'AVA', 'AVB']
 olfac_thermo_circuit = olfactory_circuit + thermosensory_circuit + ['RIA']
 thermo_subcircuit = ['AFD', 'AWC', 'AIY', 'AIZ', 'RIA']
 
+CLS_CIRCUITS = {
+    'Thermotaxis': ['AFD', 'AWC', 'AIY', 'AIZ', 'RIA'],
+    'TouchInducedMovement': ['AS', 'AVA', 'AVB', 'AVD', 'ALM', 'AVM', 'LUA', 'PLM', 'PVC', 'VA', 'DA', 'VB', 'DB']
+}
+
 # draw_multi_digraph(C, layout=nx.kamada_kawai_layout, node_shape='polygon',\
 #                        node_colors={n: cls_colors[n] for n in nodes}, node_labels={n: cls_labels[n] for n in nodes})
 # plt.show()
@@ -67,7 +74,7 @@ thermo_subcircuit = ['AFD', 'AWC', 'AIY', 'AIZ', 'RIA']
 
 beta_c = critical_inverse_temperature(C) # = 5.286973453649968
 beta_min = beta_c - .0001
-beta = 20.*beta_c + .0001
+beta = 5.*beta_c + .0001
 
 beta_afd = 1.498 * beta_c # beta_afd = 7.919886233567652, T = 0.12626443998167539
 beta_awc = 1.548 * beta_c # beta_awc = 8.18423490625015, T = 0.12218613119673756
@@ -193,8 +200,96 @@ beta_aiz = 1.59 * beta_c + .0004 # beta_aiz = 8.406687791303451, T = 0.118952912
 # print(beta_c)
 
 
-plot_feedback_coef(C, locomorory_circuit, beta_min, beta, num=1000)
-plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='10', loc='upper left')
+# plot_feedback_coef_variation(C, locomorory_circuit, beta_min, beta, num=1000)
+# plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='10', loc='upper left')
 
 # plt.savefig('./results/coefficients/ThermoSensory_feedback.pdf', dpi=300, bbox_inches='tight')
+# plt.show()
+
+
+
+## Node KMS weighted connectity
+# b_factor = 1.01
+# emitter = 'AWC'
+# emitter2 = 'AFD'
+# Con = node_kms_emittance_connectivity(C, emitter, b_factor*beta_c)
+# Con2 = node_kms_emittance_connectivity(C, emitter2, b_factor*beta_c)
+# P = [0.885558583106267, 0.11444141689373297]
+# P1 = [.24, .76]
+# Con = group_kms_emittance_connectivity(C, b_factor * beta_c, ['AWC', 'AFD'], [.0, 1.])
+# draw_weighted_digraph(K, pos={n: neuron_positions[n] for n in K.nodes}, node_size=.4, node_colors={n: node_colors[n] for n in K.nodes}, node_labels={n: node_labels[n] for n in K.nodes}, edgecolor='tan', font_size=10, figsize=(10,6))
+# plt.show()
+
+# ax = plt.gca()
+# ys = [k for k in Con.keys()]
+# # ys2 = [k for k in Con2.keys()]
+
+
+# # # Select only the neurons with non-zero receptance
+# for nv in ys:
+#     plt.scatter(nv, Con[nv], color=cls_colors[nv])
+#     ax.annotate(cls_labels[nv], (nv, Con[nv]), fontsize=7)
+
+# # #
+# # # for i, n in enumerate(vertices):
+# # #     ax.annotate(cls_labels[n], (vertices[i], prof[i]), fontsize=7)
+
+
+
+# ax.get_xaxis().set_visible(False)
+
+# plt.xlabel(f'Nodes')
+# plt.ylabel(f'{emitter} KMS intensity')
+# plt.show()
+
+
+### imshow
+# kms_em = kms_emittance(C, b_factor*beta_c)
+# Z = kms_em[1]
+# nodelist = kms_em[0]
+# center = 'AIY'
+# i = nodelist.index(center)
+# row = Z[i, :]
+# row = remove_ith(row, i)
+# ys = nodelist
+# for n in nodelist:
+#     ind = nodelist.index(n)
+#     plt.scatter(n, row[ind], color=cls_colors[n])
+#     ax.annotate(cls_labels[n], (n, row[ind]), fontsize=7)
+
+
+# plt.imshow(kms_em[1], cmap='hot')
+# ax.set_xticks(range(len(nodelist)), labels=nodelist, fontsize=5, rotation=45)
+# ax.set_yticks(range(len(nodelist)), labels=nodelist,fontsize=5, rotation=15)
+# plt.colorbar()
+# plt.xscale('symlog')
+# ax.get_xaxis().set_visible(False)
+
+# plt.show()
+
+
+### Receptance entropies
+# rois = ['AFD', 'AWC', 'AIY', 'AIZ', 'RIA']
+# plot_kms_receptance_profile_entropy(C, rois, beta_min, beta, num=1000, colors=COLORS2, node_labels=cls_labels)
+# plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='8', loc='upper left')
+# plt.tight_layout()
+# # plt.savefig('./results/group/entropy/Thermotaxis_FeedbackCoef.pdf', dpi=300, bbox_inches='tight')
+# plt.show()
+
+
+# Node to node flow streams
+name = 'Thermotaxis'
+sources = ['AFD']
+# Emit = node_kms_emittance_profile(S, )
+# targets = ['AWBL', 'AWBR', 'ADLL', 'ADLR', 'URXL', 'URXR']
+targets = CLS_CIRCUITS[name]
+plot_node_kms_stream_variation(C, sources, targets, beta_min, beta, linestyle=['-'], num=1000, colors=COLORS2, node_labels=cls_labels)
+# streams = node_to_node_kms_flow_stream(S, source, targets, beta_min, beta)
+
+# xs = streams['range']
+# for u in targets:
+#     ys = streams[u]
+#     plt.plot(xs, ys, '--', label=f'{source}-->{u}')
+plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='10', loc='upper left')
+plt.tight_layout()
 plt.show()

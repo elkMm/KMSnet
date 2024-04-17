@@ -239,30 +239,33 @@ def avg_reception_probability_variation(graph, nodelist, beta_min, beta_max, num
     return reception_prob 
 
 
-
-
-
-def states_kl_variation(graph, nodelist, beta_min, beta_max, num=50):
-    '''Return the Kulback-Liebler distance (relative entropy) between the KMS states
-    corresponding to each node in nodelist.'''
-    interval = temperature_range(beta_min, beta_max, num=num)
-
-    kl_distances = {}
-    # for _, T in interval:
-      
-
-
-
 def node_reception_profile(graph, node, beta):
     '''Probabilities of reception of the node 
     at inverse temperature beta.'''
 
     nodes, Z = kms_emittance(graph, beta)
     i = nodes.index(node)
-    reception_profile = Z[i, :]/(1. * len(nodes))
+    reception_profile = Z[i, :] # /(1. * len(nodes))
 
     return reception_profile
 
+def node_kms_receptance_profile_variation(graph,  nodelist, beta_min, beta_max, num=50):
+    '''Return KMS receptances of nodes within a given interval.'''
+
+    interval = temperature_range(beta_min, beta_max, num=num)
+    
+    KMSRecep = {'range': interval} | {node: [] for node in nodelist}
+    
+    for _, T in enumerate(interval):
+        beta = 1./T
+        nodes, Z = kms_emittance(graph, beta)
+        for u in nodelist:
+            i = nodes.index(u)
+            profile = Z[i, :]
+            KMSRecep[u] += [profile,]
+            KMSRecep.copy()
+
+    return KMSRecep
 
 
 def KMS_emittance_dist(graph, beta):
@@ -340,7 +343,7 @@ def node_structural_entropy(graph, nodelist=None):
     '''
     Returns the entropy of the column corresponding to 
     each node of nodelist in the out-degree-ratio matrix
-    obrained by the functipn out_deg_ratio_matrix of the graph.
+    obrained by the function out_deg_ratio_matrix of the graph.
     '''
     # nodes = list(graph.nodes)
 

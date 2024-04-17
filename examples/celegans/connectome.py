@@ -18,11 +18,12 @@ from src.states import *
 from src.generators import *
 from src.plotting import *
 from src.kms_graphs import *
-from src.ratios import *
+from src.measures import *
 import seaborn as sns
 # import fitter
 # from fitter import Fitter, get_common_distributions
 from src.gen_colors import *
+from neuron_positions import *
 
 
 np.random.seed(79546)
@@ -63,9 +64,20 @@ MOIN = 'mo/in'
 INMO = 'in/mo'
 INSE = 'in/se'
 
-SE_color = 'tab:orange'
-MO_color = 'tab:olive'
-IN_color = 'tab:blue'
+light_green = '#abf7c0'
+light_purple = '#ff75ff'
+light_blue = '#029ffa'
+light_orange = 'tab:orange'
+
+lightgreen = '#a4f5ea'
+blue_sky = '#71aeeb'
+light_red_gray = '#d67d6f'
+
+
+SE_color = light_blue
+IN_color = light_green
+MO_color = light_purple
+
 
 color_codes = {'se': SE_color, 'mo': MO_color, 'in': IN_color}
 
@@ -77,6 +89,8 @@ color_codes = {'se': SE_color, 'mo': MO_color, 'in': IN_color}
 
 # # print(df.columns)
 # neurons = [str(df_neurons['Neuron'][i]) for i in df_neurons.index]
+
+pharynx_neurons = ['I1L', 'I1R', 'I2L',	'I2R', 'I3', 'I4', 'I5', 'I6', 'M1', 'M2L', 'M2R', 'M3L', 'M3R', 'M4', 'M5', 'MCL', 'MCR', 'MI']
 
 neurons = []
 node_colors = {}
@@ -134,16 +148,22 @@ for i in df.index:
     if row[2] in ['S', 'Sp', 'EJ']:
         new_edges = [(row[0], row[1]),] * row[3]
         synapses += new_edges
+        
 
 
+additional_synapses = [('AWCR', 'AFDR')]
+func_links = [('AFDR', 'AIZR'), ('AFDL', 'AIZL'), ('AWCL', 'AIZL')]
 
+# synapses = synapses + func_links
+# sub = [e for e in synapses if (e[0] == 'AFDR') and (e[1] == 'AIYR')]
+# synapses = [e for e in synapses if e not in sub]
 
     # if df['Type'][i] =='EJ':
     #     EJ_net.append(edge)
 
 
 S = nx.MultiDiGraph()
-# S.add_nodes_from(neurons)
+S.add_nodes_from(['VC06'])
 S.add_edges_from(synapses)
 
 # S_bar = conjugate_graph(S)
@@ -159,7 +179,7 @@ S.add_edges_from(synapses)
 
 # G = configuration_model_from_directed_multigraph(S)
 
-beta_c = critical_inverse_temperature(S) # 3.39842857192179
+beta_c = critical_inverse_temperature(S) # 3.998629949388744
 
 # betabar_c = critical_inverse_temperature(S_bar)
 
@@ -167,9 +187,11 @@ beta_c = critical_inverse_temperature(S) # 3.39842857192179
 # beta_gd = 10 * beta_c + (52.265/100) * beta_c
 # beta_gd = 10.5 * beta_c
 
-beta_min = beta_c - .0001
+beta_min = beta_c + .000001
 
-beta = 10.1*beta_c 
+beta = 3.5*beta_c 
+
+beta_f = 1.06 * beta_c
 
 # ## Reference beta: 1.8
 
@@ -235,7 +257,7 @@ AS_neurons = [f'AS0{i}' for i in range(1, 10)] + ['AS10', 'AS11']
 DB_neurons = [f'DB0{i}' for i in range(1, 8)]
 DD_neurons = [f'DD0{i}' for i in range(1, 7)]
 
-other_motors = ['AVAL', 'AVAR', 'PVCL', 'PVCR', 'AVBL', 'AVBR']
+command_interneurons = ['AVAL', 'AVAR', 'PVCL', 'PVCR', 'AVBL', 'AVBR', 'AVDL', 'AVDR']
 
 thermotaxis_neurons = ['AFDL', 'AFDR', 'AWCL', 'AWCR', 'AIYL', 'AIYR', 'AIZL', 'AIZR', 'RIAL', 'RIAR']
 chemotaxis_neurons = ['AIAL', 'AIAR', 'ASEL', 'ASER', 'PHAL', 'PHAR', 'PHBL', 'PHBR', 'ADFL', 'ADFR', 'ASIL', 'ASIR', 'ASKL', 'ASKR', 'ASGL', 'ASGR', 'ASJL', 'ASJR']
@@ -243,9 +265,43 @@ chemotaxis_neurons = ['AIAL', 'AIAR', 'ASEL', 'ASER', 'PHAL', 'PHAR', 'PHBL', 'P
 GABA_neurons = DD_neurons + VD_neurons + ['RMED', 'RMEV', 'RMEL', 'RMER', 'AVL', 'DVB', 'RIS']
 thermosensory_neurons = thermotaxis_neurons + ['RMDDL', 'RMDDR', 'RMDL', 'RMDR', 'RMDVL', 'RMDVR', 'AVEL', 'AVER', 'AIBL', 'AIBR']
 
-locomotory_neurons = VA_neurons + VB_neurons + VD_neurons + DA_neurons + DB_neurons + DD_neurons + AS_neurons + other_motors + ['AVDL', 'AVDR', 'PDB']
+locomotory_neurons = VA_neurons + VB_neurons + VD_neurons + DA_neurons + DB_neurons + DD_neurons + AS_neurons + command_interneurons + ['PDB']
 
 olfactory_thermo_neurons = ['AFDL', 'AFDR', 'AWAL', 'AWAR', 'AWBL', 'AWBR', 'AWCL', 'AWCR', 'ADLL', 'ADLR', 'ASHL', 'ASHR', 'AVHL', 'AVHR'] + ['AIYL', 'AIYR', 'AIZL', 'AIZR', 'AIAL', 'AIAR', 'AIBL', 'AIBR', 'RIFL', 'RIFR', 'AVDL', 'AVDR', 'AVAL', 'AVAR', 'AVBL', 'AVBR']
+
+olfactory_neurons = ['AFDL', 'AFDR', 'AWAL', 'AWAR', 'AWBL', 'AWBR', 'AWCL', 'AWCR', 'ADLL', 'ADLR', 'ASHL', 'ASHR', 'AVHL', 'AVHR', 'AIBL', 'AIBR', 'AIYL', 'AIYR', 'AIZL', 'AIZR']
+
+mechanoreceptor_neurons = ['ALML', 'ALMR', 'PLML', 'PLMR', 'AVM', 'PVM', 'PVDL', 'PVDR', 'ADEL', 'ADER', 'PDEL', 'PDER', 'ASHL', 'ASHR', 'FLPL', 'FLPR', 'OLQDL', 'OLQDR', 'OLQVL', 'OLQVR', 'CEPDL', 'CEPDR', 'CEPVL', 'CEPVR', 
+'IL1L', 'IL1R', 'IL1DL', 'IL1DR', 'IL1VL', 'IL1VR']
+
+chemorepulsion_neurons = ['AVAL', 'AVAR', 'AVDL', 'AVDR', 'AVBL', 'AVBR', 'PVCL', 'PVCR', 'PHAL', 'PHAR', 'PHBL', 'PHBR', 'ASKL', 'ASKR', 'ASHL', 'ASHR', 'AIAL', 'AIAR', 'AIBL', 'AIBR']
+
+touch_sensitive_neurons = VA_neurons + DA_neurons + VB_neurons + DB_neurons + \
+     AS_neurons + command_interneurons + ['ALML', 'ALMR', 'AVM', 'PLML', 'PLMR', 'LUAL', 'LUAR']
+
+
+CIRCUITS = {
+    'CommandInterneurons': command_interneurons,
+    'Thermotaxis': thermotaxis_neurons,
+    'ThermoSensory': thermosensory_neurons,
+    'Locomotory': locomotory_neurons,
+    'OlfactoryThermo': olfactory_thermo_neurons,
+    'MechanoSensory': mechanoreceptor_neurons,
+    'GABA': GABA_neurons,
+    'Chemotaxis': chemotaxis_neurons,
+    'Olfactory': olfactory_neurons,
+    'Chemorepulsion': chemorepulsion_neurons,
+    'TouchInducedMovement': touch_sensitive_neurons,
+    'VA': VA_neurons,
+    'VB': VB_neurons,
+    'VD': VD_neurons,
+    'DA': DA_neurons,
+    'DB': DB_neurons,
+    'DD': DD_neurons,
+    'AS': AS_neurons
+}
+
+
 # nodelist = list(S.nodes)
 # plot_node_entropy(S, nodelist, beta_min, beta, num=5000)
 # # draw_multi_digraph(G, layout=nx.kamada_kawai_layout)
@@ -425,24 +481,168 @@ olfactory_thermo_neurons = ['AFDL', 'AFDR', 'AWAL', 'AWAR', 'AWBL', 'AWBR', 'AWC
 # plt.show()
 
 
-#### Draw functional circuits
+#### Draw structural circuits
+# name = 'ThermoSensory'
+# # for name in CIRCUITS:
+# V = CIRCUITS[name]
+# K = weighted_structural_subgraph(S, nodelist=V)
+# draw_weighted_digraph(K, pos={n: neuron_positions[n] for n in K.nodes}, node_size=1.6, node_colors={n: node_colors[n] for n in K.nodes}, node_labels={n: node_labels[n] for n in K.nodes}, edgecolor='silver', font_size=7, figsize=(10,6))
+# # plt.show()
+# plt.savefig(f'./results/nets/struc/{name}_circuit.pdf', dpi=300, bbox_inches='tight')
+# plt.close()
 # V = olfactory_thermo_neurons
 # K = nx.MultiDiGraph()
+# K.add_nodes_from(V)
 # K.add_edges_from([e for e in synapses if ((e[0] in V) and (e[1] in V))])
-# draw_multi_digraph(K, pos={n: neuron_positions[n] for n in K.nodes}, node_size=.4, node_colors={n: node_colors[n] for n in K.nodes}, node_labels={n: node_labels[n] for n in K.nodes}, font_size=8, figsize=(6,10))
-# plt.savefig('./results/nets/OlfactoryThermo_circuit.pdf', dpi=300, bbox_inches='tight')
+# draw_multi_digraph(K, pos={n: neuron_positions[n] for n in K.nodes}, node_size=.4, node_colors={n: node_colors[n] for n in K.nodes}, node_labels={n: node_labels[n] for n in K.nodes}, edgecolor='silver', font_size=11, figsize=(10,6))
+# plt.savefig('./results/nets/struc/OlfactoryThermo_circuit.pdf', dpi=300, bbox_inches='tight')
 # plt.show()
 
 
 # weights and ratios
-# v = 'AVAL'
-# w = node_kms_in_weight(S, [v], beta_min, beta, num=20)
+# name = 'Thermotaxis'
+# V = CIRCUITS[name]
+# # # w = node_kms_in_weight(S, V, beta_min, beta, num=20)
 
-# print(w[v])
+# # # print(w['RIAR'])
+# plot_feedback_coef_variation(S, V, beta_min, beta, num=1000, colors=COLORS2, font_size=10)
+# plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='8', loc='upper left')
+
+# # plt.savefig(f'./results/fid/{name}_fidelity.pdf', dpi=300, bbox_inches='tight')
+# plt.savefig(f'./results/coefficients/{name}_feedback.pdf', dpi=300, bbox_inches='tight')
+# plt.close()
+# plt.show()
+
+# rank = beta_kms_receptance_ranking(S, beta_f)
+# rank_file = open('./results/data/coefs/kms-receptance-ranking_1.06xbeta_c.csv', 'w', newline='')
+# writer = csv.writer(rank_file, delimiter=',')
+# for key in rank:
+#     row = [key,rank[key]]
+#     writer.writerow(row)
+
 
 # KMS subgraphs
-K = kms_subgraph(S, 1.00001 * beta_c, nodelist=locomotory_neurons)
+# b_factors = [.9, .98, 1.001, 1.01, 1.06, 1.1, 1.2, 1.5, 1.8, 1.9, 2., 2.1, 2.4, 2.6, 2.8, 3., 3.1, 3.2, 3.5, 3.8, 4.] 
+# # b_factors = [1.1]
+# # b_factor = 1.06
+# name = 'ThermoSensory'
+# V = CIRCUITS[name]
+# for b_factor in b_factors:
+#     b = b_factor * beta_c
+#     # V = olfactory_thermo_neurons
+#     K = kms_weighted_subgraph(S, b, nodelist=V)
 
-# print(list(K.edges(data=True))[0][2]['weight'])
-draw_weighted_digraph(K, pos={n: neuron_positions[n] for n in K.nodes}, node_size=.6, node_colors={n: node_colors[n] for n in K.nodes}, node_labels={n: node_labels[n] for n in K.nodes}, edgecolor='slategray', font_size=6, figsize=(6,10))
-plt.show()
+# # # print(list(K.edges(data=True))[0][2]['weight'])
+#     draw_weighted_digraph(K, pos={n: neuron_positions[n] for n in K.nodes}, node_size=1.6, node_colors={n: node_colors[n] for n in K.nodes}, node_labels={n: node_labels[n] for n in K.nodes}, edgecolor=blue_sky, font_size=8, figsize=(10,6))
+#     plt.savefig(f'./results/nets/kms_graphs/func_circuits/{name}_KMS-subgraph-{b_factor}xbeta_c.pdf', dpi=300, bbox_inches='tight')
+#     plt.close()
+#     plt.show()
+
+### 
+# beta_f = 1.06 * beta_c # = 4.238547746352069 optimal functional beta?
+## T_f = 1/beta_f = 0.2359298655679073
+
+
+# plt.hist(list(rank.values()), bins=10)
+# plt.show()
+
+# print(rank)
+# print([e for e in synapses if e[1] == 'PVDL'])
+
+## Node KMS weighted connectity
+# b_factor = 1.01
+# emitter = 'AFDR'
+# Con = node_kms_emittance_connectivity(S, emitter, b_factor*beta_c)
+# # # draw_weighted_digraph(K, pos={n: neuron_positions[n] for n in K.nodes}, node_size=.4, node_colors={n: node_colors[n] for n in K.nodes}, node_labels={n: node_labels[n] for n in K.nodes}, edgecolor='tan', font_size=10, figsize=(10,6))
+# # # plt.show()
+
+# ax = plt.gca()
+# ys = [k for k in Con.keys()]
+
+# # # # Select only the neurons with non-zero receptance
+# for nv in ys:
+#     plt.scatter(nv, Con[nv], color=node_colors[nv])
+#     ax.annotate(node_labels[nv], (nv, Con[nv]), fontsize=7)
+
+# #
+# # for i, n in enumerate(vertices):
+# #     ax.annotate(cls_labels[n], (vertices[i], prof[i]), fontsize=7)
+
+
+
+# ax.get_xaxis().set_visible(False)
+
+# plt.xlabel(f'Nodes')
+# plt.ylabel(f'{emitter} KMS intensity')
+# plt.show()
+# plt.savefig(f'./results/neuronKMS/{emitter}_KMS-{b_factor}xbeta_c.pdf', dpi=300, bbox_inches='tight')
+#     plt.close()
+
+# print([e for e in synapses if (e[0] == e[1])])
+
+# print('VC06' in list(S.nodes))
+# print(len(S.nodes))
+# print(S.in_degree('AIAL'), S.out_degree('AIAL'))
+
+
+# Node to node flow streams
+# remove_nodes = ['AFDR', 'AFDL']
+# S.remove_edges_from([e for e in synapses if (e[0] in remove_nodes) or (e[1] in remove_nodes)])
+# name = 'Thermotaxis'
+# sources = ['AIYR', 'AIYL']
+# linestyle = ['-', ':', '--', '-.']
+# # Emit = node_kms_emittance_profile(S, )
+# # targets = ['AWBL', 'AWBR', 'ADLL', 'ADLR', 'URXL', 'URXR']
+# targets = CIRCUITS[name]
+# # targets = ['AFDR', 'AFDL', 'AWCR', 'AWCL', 'AIYR', 'AIZR', 'AIZL', 'RIAR', 'RIAL']  # 
+
+# plot_node_kms_stream_variation(S, sources, targets, beta_min, beta, linestyle=linestyle, num=1000, colors=COLORS2, node_labels=node_labels)
+# streams = node_to_node_kms_flow_stream(S, source, targets, beta_min, beta)
+
+# xs = streams['range']
+# for u in targets:
+#     ys = streams[u]
+#     plt.plot(xs, ys, '--', label=f'{source}-->{u}')
+# plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='8', loc='upper left')
+# # plt.tight_layout()
+# # plt.savefig(f'./results/circuits/streams/{sources}_to_{name}_stream.pdf', dpi=300, bbox_inches='tight')
+# plt.show()
+
+
+## Clustering based on Node flow streams
+# name = 'Thermotaxis'
+# source = 'AWCL'
+
+# # targets = ['AWBL', 'AWBR', 'ADLL', 'ADLR', 'URXL', 'URXR']
+# targets = CIRCUITS[name]
+# # ax = plt.gca()
+
+
+# #                 )
+# plot_node_kms_streams_clustering(S, source, targets, beta_min, beta, num=100, font_size=8)
+# # plt.imshow(data, cmap='hot')
+# # ax.set_xticks(range(len(targets)), labels=targets, rotation=45)
+# # ax.set_yticks(range(len(streams['range'])), labels=streams['range'], rotation=15)
+# plt.savefig(f'./results/circuits/clustering/{source}_to_{name}_stream.pdf', dpi=300, bbox_inches='tight')
+# plt.tight_layout()
+
+# plt.show()
+# print(data.head())
+
+
+### Receptance entropies
+# name = 'Thermotaxis'
+# NOIS = CIRCUITS[name] # Neurons of interests
+# plot_feedback_coef_variation(S, NOIS, beta_min, beta, num=1000, colors=COLORS2, node_labels=node_labels)
+# plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='8', loc='upper left')
+# plt.tight_layout()
+# # plt.savefig(f'./results/circuits/entropy/{name}_receptance_entropy.pdf', dpi=300, bbox_inches='tight')
+# # plt.savefig(f'./results/circuits/entropy/{name}_emittance_entropy.pdf', dpi=300, bbox_inches='tight')
+# # plt.savefig(f'./results/circuits/indices/{name}_feedback_coef.pdf', dpi=300, bbox_inches='tight')
+# plt.show()
+
+# afd = ['AFDR', 'AFDL']
+# AFD_links = [e for e in synapses if (e[0] in afd) or (e[1] in afd)]
+# print(len(AFD_links))    
+
+# print(len(synapses))
