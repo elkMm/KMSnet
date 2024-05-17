@@ -5,7 +5,7 @@ import networkx as nx
 import matplotlib.pyplot as plt 
 import numpy as np 
 import pandas as pd
-import csv
+import csv, json
 
 
 ex_dir = os.path.dirname(__file__)
@@ -26,7 +26,7 @@ from src.gen_colors import *
 from neuron_positions import *
 
 
-np.random.seed(79546)
+# np.random.seed(79546)
 
 
 
@@ -66,16 +66,18 @@ INSE = 'in/se'
 
 light_green = '#abf7c0'
 light_purple = '#ff75ff'
-light_blue = '#029ffa'
+light_blue = '#5abde0'
 light_orange = 'tab:orange'
+
 
 lightgreen = '#a4f5ea'
 blue_sky = '#71aeeb'
 light_red_gray = '#d67d6f'
+light_gray_yellow = '#f0e086'
 
 
-SE_color = light_blue
-IN_color = light_green
+SE_color = light_green
+IN_color = light_gray_yellow
 MO_color = light_purple
 
 
@@ -116,13 +118,18 @@ for _, row in enumerate(n_rows):
 neuron_cls = list(set(neuron_cls))
 
 # Put neurons in their corresponding neuron classes
-neuron_cl_dict = {}
-for cl in neuron_cls:
-    neuron_cl_dict[cl] = [str(r[0]) for r in n_rows if str(r[1]) == str(cl)]
-    neuron_cl_dict.copy()
+# neuron_cl_dict = {}
+# for cl in neuron_cls:
+#     neuron_cl_dict[cl] = [str(r[0]) for r in n_rows if str(r[1]) == str(cl)]
+#     neuron_cl_dict.copy()
+
+neuron_by_classes_f = open('../data/neurons_by_classes.json', 'r')
+neuron_by_classes = json.load(neuron_by_classes_f)
 
 
+pharyngeal = ['M1', 'M2', 'M3', 'M4', 'M5', 'I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'MI', 'NSM', 'MC', 'CAN']
 
+neuron_by_classes = {nc: neuron_by_classes[nc] for nc in neuron_by_classes if nc not in pharyngeal}
 # print(node_colors)
 
 interNeurons = [row[0] for row in n_rows if row[2].startswith('in')]   
@@ -280,9 +287,13 @@ touch_sensitive_neurons = VA_neurons + DA_neurons + VB_neurons + DB_neurons + \
      AS_neurons + command_interneurons + ['ALML', 'ALMR', 'AVM', 'PLML', 'PLMR', 'LUAL', 'LUAR']
 
 
+extended_thermotaxis = thermotaxis_neurons + ['AIAL', 'AIAR', 'AIBL', 'AIBR', 'ASIL', 'ASIR']
+
+
 CIRCUITS = {
     'CommandInterneurons': command_interneurons,
     'Thermotaxis': thermotaxis_neurons,
+    'ExtendedThermotaxis': extended_thermotaxis,
     'ThermoSensory': thermosensory_neurons,
     'Locomotory': locomotory_neurons,
     'OlfactoryThermo': olfactory_thermo_neurons,
@@ -298,7 +309,17 @@ CIRCUITS = {
     'DA': DA_neurons,
     'DB': DB_neurons,
     'DD': DD_neurons,
-    'AS': AS_neurons
+    'AS': AS_neurons,
+    'AFD': ['AFDL', 'AFDR'],
+    'AWC': ['AWCL', 'AWCR'],
+    'AIA': ['AIAL', 'AIAR'],
+    'AIB': ['AIBL', 'AIBR'],
+    'ASI': ['ASIL', 'ASIR'],
+    'AIY': ['AIYL', 'AIYR'],
+    'AIZ': ['AIZL', 'AIZR'],
+    'RIA': ['RIAL', 'RIAR'],
+    'RIB': ['RIBL', 'RIBR'],
+    'ASE': ['ASEL', 'ASER']
 }
 
 
@@ -646,3 +667,16 @@ CIRCUITS = {
 # print(len(AFD_links))    
 
 # print(len(synapses))
+
+
+
+### Emittance entropies
+# name = 'Thermotaxis'
+# NOIS = CIRCUITS[name] # Neurons of interests
+# plot_node_kms_emittance_profile_entropy(S, NOIS, beta_min, beta, num=1000, colors=COLORS2, node_labels=node_labels)
+# plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='8', loc='upper left')
+# # plt.tight_layout()
+# # plt.savefig(f'./results/newConnectome/entropy/{name}_emittance_entropy.pdf', dpi=300, bbox_inches='tight')
+# # # plt.savefig(f'./results/circuits/entropy/{name}_emittance_entropy.pdf', dpi=300, bbox_inches='tight')
+# # # plt.savefig(f'./results/circuits/indices/{name}_feedback_coef.pdf', dpi=300, bbox_inches='tight')
+# plt.show()

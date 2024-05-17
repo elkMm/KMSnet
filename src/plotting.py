@@ -7,7 +7,7 @@ from scipy.special import rel_entr
 import seaborn as sns 
 from collections import defaultdict
 from distinctipy import get_colors
-from .utils import is_qual, out_deg_ratio_matrix, fidelity, nonzero_sum, remove_ith
+from .utils import is_qual, out_deg_ratio_matrix, fidelity, nonzero_sum, remove_ith, js_divergence
 from .states import (
     emittance_matrix,
     kms_emittance,
@@ -17,11 +17,12 @@ from .states import (
     node_kms_emittance_profile_entropy_range,
     node_kms_emittance_profile_diversity_range,
     KMS_emittance_dist_entropy_variation,
-    node_structural_state,
+    node_structural_connectivity,
     node_structural_entropy, 
 )
 from .measures import *
 from .kms_graphs import node_kms_emittance_connectivity
+from .node_classes import node_kms_emittance_profile_by_classes
 
 
 def plot_node_kms_stream_variation(graph, sources, targets, beta_min, beta_max, linestyle=None, num=100, colors=None, node_labels=None, font_size=12):
@@ -36,7 +37,7 @@ def plot_node_kms_stream_variation(graph, sources, targets, beta_min, beta_max, 
     nodes = list(graph.nodes)
 
     if linestyle == None:
-        styles = ['-'] * len(sources)
+        linestyle = ['-'] * len(sources)
 
     for i, source in enumerate(sources):
         streams = node_to_node_kms_flow_stream(graph, source, targets, beta_min, beta_max)
@@ -243,9 +244,9 @@ def plot_node_emittance(graph, nodelist, beta_min, beta_max, num=100, node_label
 
 
 
-def plot_states_fidelity(graph, nodelist, beta_min, beta_max, num=50, colors=None, node_labels=None, font_size=12):
-    '''Plot the variation of the fidelity between 
-    structural states and KMS states of nodes.'''
+def plot_structure_kms_state_divergence(graph, nodelist, beta_min, beta_max, num=50, colors=None, node_labels=None, font_size=12):
+    '''Plot the variation of the divergence between 
+    structural connectivity and KMS states of nodes.'''
 
     plt.rcParams.update({
         "figure.autolayout": True,
@@ -254,7 +255,7 @@ def plot_states_fidelity(graph, nodelist, beta_min, beta_max, num=50, colors=Non
         "font.size": font_size
     })
 
-    vertices, SS = node_structural_state(graph)
+    vertices, SS = node_structural_connectivity(graph)
     xs = list(np.linspace(1./beta_max, 1./beta_min, num=num))
     
     if colors == None:
@@ -272,10 +273,12 @@ def plot_states_fidelity(graph, nodelist, beta_min, beta_max, num=50, colors=Non
         verts, Z = kms_emittance(graph, beta)
         for v in nodelist:
             v_ind = vertices.index(v)
+            k = verts.index(v)
             struc = remove_ith(SS[v], v_ind)
-            prof = remove_ith(Z[:, v_ind], v_ind)
+            prof = remove_ith(Z[:, v_ind], k)
             fid = fidelity(struc, prof)
-            YS[v] += [fid,]  
+            div = (1. - fid) * 100.
+            YS[v] += [div,]  
             YS.copy()  
 
     for i, node in enumerate(nodelist):
@@ -288,7 +291,7 @@ def plot_states_fidelity(graph, nodelist, beta_min, beta_max, num=50, colors=Non
 
         plt.plot(xs, ys, label=label, color=color)
 
-    xlabel = f'Temperature 1/ß'    
+    xlabel = r'Temperature $1/\beta$'    
     plt.xlabel(xlabel)
     plt.ylabel('Fidelity to structure')
 
@@ -320,11 +323,12 @@ def plot_node_kms_connectivity(graph, node, beta, tol=TOL, node_labels=None, nod
     ax.get_xaxis().set_visible(False)
 
     plt.xlabel(f'Nodes')
-    plt.ylabel(f'KMS receptance from {node} ')
+    plt.ylabel(f'{node} neural emittance')
     # plt.show()
 
 
 def plot_node_kms_emittance_profile_entropy(graph, nodelist, beta_min, beta_max, num=50, colors=None, node_labels=None, font_size=12):
+    '''Plot the variation of the entropy of each node KMS emittance in nodelist.'''
 
     plt.rcParams.update({
         "figure.autolayout": True,
@@ -334,7 +338,7 @@ def plot_node_kms_emittance_profile_entropy(graph, nodelist, beta_min, beta_max,
     })
 
     KMS = node_kms_emittance_profile_variation(graph, nodelist, beta_min, beta_max, num=num)
-    vertices, SS = node_structural_state(graph, nodelist=nodelist)
+    vertices, SS = node_structural_connectivity(graph, nodelist=nodelist)
 
     # H = node_kms_emittance_profile_entropy_range(graph, nodelist, beta_min, beta_max, num=num)
 
@@ -374,7 +378,7 @@ def plot_node_kms_emittance_profile_entropy(graph, nodelist, beta_min, beta_max,
             if  is_qual(fid, 1., tol=1e-1):
                 plt.scatter(xs[step], entropy(u_prof), color=color)
 
-    xlabel = f'Inverse Temperature ß'    
+    xlabel = r'Temperature $1/\beta$' 
     plt.xlabel(xlabel)
     plt.ylabel('Node profile entropy')
     # plt.legend()
@@ -404,10 +408,112 @@ def plot_node_kms_emittance_profile_diversity(graph, nodelist, beta_min, beta_ma
         if labels[u] != '':
             label = labels[u]
         plt.plot(x, y, label=label)
-    xlabel = f'Temperature 1/ß'
+    xlabel = r'Temperature $1/\beta$'
     plt.xlabel(xlabel)
     plt.ylabel('Node profile diversity')
     plt.legend()
+
+
+def plot_kms_states_js_divergence(graph, node_pairs, beta_min, beta_max, num=100, linestyle=None, colors=None, node_labels=None, font_size=12):
+    '''Plot the variation of Jensen-Shannon divergence betwen the KMS states of each pair of nodes in node_pairs.
+
+    Parameters
+    ----------
+    node_pairs : list of 2-tuples
+    '''
+
+    plt.rcParams.update({
+        "figure.autolayout": True,
+        "text.usetex": True,
+        "font.family": "Times New Roman",
+        "font.size": font_size
+    })
+    nodes = list(graph.nodes)
+    if linestyle == None:
+        linestyle = ['-'] * len(node_pairs)
+
+    nodelist = []
+    for pair in node_pairs:
+        nodelist += [pair[0], pair[1]]
+    
+    nodelist = list(set(nodelist))
+
+    KMS = node_kms_emittance_profile_variation(graph, nodelist, beta_min, beta_max, num=num)
+
+    xs = KMS['range']
+    if colors == None:
+        colors = get_colors(len(node_pairs), pastel_factor=.5)
+    
+    labels = defaultdict(lambda: '')
+    if node_labels != None:
+        for n in node_labels:
+            labels[n] = node_labels[n]
+    
+    for i, (left, right) in enumerate(node_pairs):
+        profile_pairs = zip(KMS[left], KMS[right])
+        li = nodes.index(left)
+        ri = nodes.index(right)
+        # ys = [js_divergence(p[0], p[1]) for _, p in enumerate(profile_pairs)]
+        ys = [js_divergence(remove_ith(p[0], li), remove_ith(p[1], ri)) for _, p in enumerate(profile_pairs)]
+        color = colors[i]
+        plt.plot(xs, ys, linestyle[i], label=f'({labels[left]}, {labels[right]})', color=color)
+        
+    plt.xlabel(r'Temperature $1/\beta$')
+    plt.ylabel('KMS states divergence')
+
+
+def plot_kms_states_by_classes_divergence(graph, nodes_by_classes, node_pairs, beta_min, beta_max, num=100, linestyle=None, colors=None, node_labels=None, font_size=12):
+    '''Plot the variation of Jensen-Shannon divergence betwen the KMS states of each pair of nodes in node_pairs.
+
+    Parameters
+    ----------
+    nodes_by_classes : dict
+    node_pairs : list of 2-tuples
+    '''
+
+    plt.rcParams.update({
+        "figure.autolayout": True,
+        "text.usetex": True,
+        "font.family": "Times New Roman",
+        "font.size": font_size
+    })
+    # nodes = list(graph.nodes)
+    if linestyle == None:
+        linestyle = ['-'] * len(node_pairs)
+
+    nodelist = []
+    for pair in node_pairs:
+        nodelist += [pair[0], pair[1]]
+    
+    nodelist = list(set(nodelist))
+
+    KMS = node_kms_emittance_profile_by_classes(graph, nodes_by_classes, nodelist, beta_min, beta_max, num=num)
+
+    xs = KMS['range']
+    node_cls = KMS['node_cls']
+
+    if colors == None:
+        colors = get_colors(len(node_pairs), pastel_factor=.5)
+    
+    labels = defaultdict(lambda: '')
+    if node_labels != None:
+        for n in node_labels:
+            labels[n] = node_labels[n]
+    
+    for i, (left, right) in enumerate(node_pairs):
+        profile_pairs = zip(KMS[left], KMS[right])
+        # left_cl = [c for c in node_cls if left in nodes_by_classes[c]][0]
+        # right_cl = [cl for cl in node_cls if right in nodes_by_classes[cl]][0]
+        # li = node_cls.index(left_cl)
+        # ri = node_cls.index(right_cl)
+        ys = [js_divergence(p[0], p[1]) for _, p in enumerate(profile_pairs)]
+        # ys = [js_divergence(remove_ith(p[0], li), remove_ith(p[1], ri)) for _, p in enumerate(profile_pairs)]
+        color = colors[i]
+        plt.plot(xs, ys, linestyle[i], label=f'({labels[left]}, {labels[right]})', color=color)
+        
+    plt.xlabel(r'Temperature $1/\beta$')
+    plt.ylabel('KMS connectivity symmetry')
+
 
 
 def plot_kms_simplex_volume(graph, beta_min, beta_max, num=100, font_size=12):
@@ -447,6 +553,6 @@ def plot_kms_simplex_volume(graph, beta_min, beta_max, num=100, font_size=12):
 
     plt.plot(xs, ys, '-', color='tab:red')
     plt.plot(xs, [V_R] * len(xs), '--', color='tab:gray')
-    xlabel = f'Temperature 1/ß'
+    xlabel = r'Temperature $1/\beta$'
     plt.xlabel(xlabel)
     plt.ylabel('KMS Simplex volume')

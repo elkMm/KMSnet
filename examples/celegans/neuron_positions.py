@@ -10,7 +10,8 @@ sys.path.append( cn_module_dir )
 
 files = {
     'chemorep': '../data/chemorepulsion_pos.csv',
-    'touchSens': '../data/touch_circuit_pos.csv'
+    'touchSens': '../data/touch_circuit_pos.csv',
+    'thermotaxis': '../data/thermotaxis_pos.csv'
 }
 
 POSITIONS = {

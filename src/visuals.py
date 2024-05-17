@@ -3,7 +3,7 @@ from collections import defaultdict
 from matplotlib import cm, colors
 import matplotlib.pyplot as plt 
 import numpy as np
-from matplotlib.patches import Ellipse, Circle, FancyArrowPatch, PathPatch, RegularPolygon
+from matplotlib.patches import Ellipse, Circle, FancyArrowPatch, PathPatch, RegularPolygon, ArrowStyle
 import mpl_toolkits.mplot3d.art3d as art3d
 from mpl_toolkits.mplot3d import proj3d
 
@@ -98,24 +98,24 @@ def draw_multi_digraph(G, pos=None, layout=nx.spring_layout, node_shape='round',
 
 
 
-def draw_weighted_digraph(G, pos=None, layout=nx.spring_layout, node_shape='round', node_size=.4, node_colors=None, node_labels=None, edgecolor='tab:gray', font_size=12, figsize=(10,10), ax=None):
+def draw_weighted_digraph(G, pos=None, layout=nx.spring_layout, node_shape=None, node_size=.4, node_colors=None, node_labels=None, edgecolor='tab:gray', arrowstyle='simple', arrow_shrink=None, font_size=12, figsize=(10,10), ax=None):
     '''
     Draw a directed weighted digraph.
 
     Parameters
     ----------
     G : a networkx DiGraph object
-    node_shape: str
-        `circle` or `polygon`
+    node_shape: dict, optional, default: None
+        Dictionary of nodes as keys and str as values representing the corresponding node shape: only `round` or `polygon` are accepted FOR NOW!
     '''
 
     plt.rcParams.update({
         "figure.autolayout": True,
         "figure.figsize": figsize,
-        "text.usetex": True,
-        "font.family": "Helvetica",
-        "font.size": font_size,
-        "font.weight": "bold"
+        # "text.usetex": True,
+        # "font.family": "Helvetica",
+        # "font.size": font_size,
+        # "font.weight": "bold"
     })
 
     # pos = nx.kamada_kawai_layout(G)
@@ -126,8 +126,8 @@ def draw_weighted_digraph(G, pos=None, layout=nx.spring_layout, node_shape='roun
     fig, ax = plt.subplots()
 
     
-    if ax is None:
-        ax = plt.gca()
+    # if ax is None:
+    #     ax = plt.gca()
     # ax = plt.gca()
     ax.set_axis_off()
     xs = []
@@ -142,26 +142,40 @@ def draw_weighted_digraph(G, pos=None, layout=nx.spring_layout, node_shape='roun
     if node_labels != None:
         for n in node_labels:
             labels[n] = node_labels[n]
-    
-    draw_node = round_node
-    width = node_size
-    if node_shape == 'polygon':
-        draw_node = polygonal_node
-        width = node_size
 
+    shapes = defaultdict(lambda: round_node)
+    if node_shape != None:
+        for n in node_shape:
+            if node_shape[n] == 'round':
+                shapes[n] = round_node
+            if node_shape[n] == 'polygon':
+                shapes[n] = polygonal_node
+
+            # shapes[n] = node_shape[n]
+
+    # draw_node = round_node
+    width = node_size
+    # if node_shape == 'polygon':
+    #     draw_node = polygonal_node
+    #     # width = node_size
+    node_kws = dict(fontweight='heavy', fontstretch='normal')
     for node in pos:
         x, y = pos[node]
-        draw_node((x,y), facecolor=color_map[node], width=width, ax=ax)
-        ax.annotate(labels[node], xy=(x, y), fontsize=font_size, weight='bold', zorder=5, ha='center', va='center')
+        shapes[node]((x,y), facecolor=color_map[node], width=width, ax=ax)
+        ax.annotate(labels[node], xy=(x, y), fontsize=font_size, zorder=10, ha='center', va='center', **node_kws)
         xs.append(x)
         ys.append(y)
    
     edges = list(G.edges(data=True))
+    
+    shrink_factor = node_size * 10.
+    if arrow_shrink != None:
+        shrink_factor = arrow_shrink
 
     for w_edge in edges:
         edge = (w_edge[0], w_edge[1], 0)
-        weight = 4 * w_edge[2]['weight']
-        draw_curved_edge(edge, width=weight, alpha=1., color=edgecolor, pos=pos, ax=ax)
+        weight = 24 * w_edge[2]['weight']
+        draw_curved_edge(edge, arrowstyle=arrowstyle, width=weight, alpha=1., color=edgecolor, shrink_factor=shrink_factor, pos=pos, ax=ax)
 
     # if node_labels != None:
     #     # Draw node labels
@@ -188,7 +202,7 @@ def draw_weighted_digraph(G, pos=None, layout=nx.spring_layout, node_shape='roun
 
 
     
-def draw_flow_mode(G, pos, with_labels=False, node_labels=None, node_size=30, max_node_size=80, width=.1, alpha=.5, node_color='white', edge_color='tab:blue', edgecolors='black', font_size=20, ax=None):
+def draw_flow_mode(G, pos, with_labels=False, node_labels=None, node_size=30, width=.1, alpha=.5, node_color='white', edge_color='tab:blue', edgecolors='black', font_size=20, ax=None):
     '''Visualizes a directed graph with the positions 
     given by the inflow or outflow groupoid.'''
     if ax is None:
@@ -231,18 +245,17 @@ def draw_flow_mode(G, pos, with_labels=False, node_labels=None, node_size=30, ma
 
     nx.draw_networkx(G, pos=pos, edgelist=edgelist, with_labels=with_labels, label=node_labels, node_size=node_size, width=width, alpha=alpha, node_color=node_color, edge_color=edge_color, edgecolors=edgecolors, ax=ax)
 
-    
 
-
-def polygonal_node(xy, width=1., edgecolor='Black', facecolor='tab:blue', zorder=4, alpha=.8, ax=None):
+def polygonal_node(xy, width=1., edgecolor='dimgray', facecolor='tab:blue', zorder=8, alpha=.4, ax=None):
     '''Node in the form of polygon'''
+
     kwargs = dict(edgecolor=edgecolor, facecolor=facecolor, zorder=zorder, alpha=alpha)
-    patch = RegularPolygon(xy, numVertices=5, radius=width, **kwargs)
+    patch = RegularPolygon(xy, numVertices=5, radius=width/2, **kwargs)
     ax.add_patch(patch)
 
 
 
-def round_node(xy, facecolor='yellow', width=0.06, edgecolor='dimgray', zorder=4, alpha=.6, ax=None):
+def round_node(xy, facecolor='yellow', width=0.06, edgecolor='dimgray', zorder=8, alpha=.4, ax=None):
     '''Draw a node given a dictionary of node positions.'''
     # if ax is None:
     #     ax = plt.gca()
@@ -251,34 +264,50 @@ def round_node(xy, facecolor='yellow', width=0.06, edgecolor='dimgray', zorder=4
     ax.add_patch(ell)
 
 
-def draw_curved_edge(edge, color='tab:gray', width=.2, alpha=0.4, zorder=3, pos=None, ax=None):
+def draw_curved_edge(edge, color='tab:gray',arrowstyle='simple', width=.2, alpha=0.4, zorder=1, shrink_factor=2., pos=None, ax=None):
     '''Draws curved edge given the source and range positions of the edge'''
 
-    # if ax is None:
-    #     ax = plt.gca()
-
-    arc = _curved_edge(edge=edge, color=color, width=width, alpha=alpha, zorder=zorder, pos=pos)
+    arc = _curved_edge(edge=edge, color=color, arrowstyle=arrowstyle, width=width, alpha=alpha, zorder=zorder, shrink_factor=shrink_factor, pos=pos)
     ax.add_patch(arc)
 
 
-def _node(xy, color='tab:red', width=0.02, edgecolor='tab:gray', zorder=5, alpha=0.6):
+def _node(xy, color='tab:red', width=0.02, edgecolor='dimgray', zorder=5, alpha=0.6):
     '''Plots an ellipse to represent a node given a dictionary of node positions.'''
 
     ell = Circle(xy, radius=width/2., zorder=zorder, lw=0.5, edgecolor=edgecolor, facecolor=color, alpha=alpha)
     return ell
 
 
-def _curved_edge(edge, color='blue', width=0.3, alpha=.6, zorder=1, pos=None):
+def _curved_edge(edge, color='blue', arrowstyle='simple', width=0.3, shrink_factor=2., alpha=.6, zorder=1, pos=None):
     '''Returns an object to represent an arc, used mainly for interlayer connections.'''
 
     n0, n1, route = edge
     x0,y0 = pos[n0]
     x1,y1 = pos[n1]
-    head_width = 4 * (1. + width)
-    head_length = 8 * (1. + width)
-    style = f'Simple, head_width={head_width}, head_length={head_length}'
+    head_width = 1.5 * (1. + width)
+    head_length = 2 * (1. + width)
+    # shrink = shrink_factor * 10.
+    simple = f'Simple, head_width={head_width}, head_length={head_length}'
+    wedge = f'Wedge, tail_width={1. + 1.2*width}, shrink_factor=0.1'
+    anat = f'->, head_width={.5*width}, head_length={.1*width}'
+    bracket = ArrowStyle(']-[', widthA=.0, lengthA=0., angleA=None, widthB=width, lengthB=2.*width, angleB=None)
+    fancy = f'fancy, head_length={head_length}, head_width={width}, tail_width={width}'
+
+    style = simple 
+    
+    linestyle = '-'
+    if arrowstyle == 'wedge':
+        style = wedge
+    elif arrowstyle == 'anat':
+        style = anat
+    elif arrowstyle == 'bracket':
+        style = bracket
+    elif arrowstyle == 'fancy':
+        style = fancy
+        # linestyle = '-'
+
     angle = (.1 + int(route)/100.)
-    arc = FancyArrowPatch((x0,y0),(x1,y1), linestyle='-', arrowstyle=style, color=color, alpha=alpha, connectionstyle='arc3,rad=' + f'{angle}', zorder=zorder, lw=width)
+    arc = FancyArrowPatch((x0,y0),(x1,y1), linestyle=linestyle, arrowstyle=style, color=color, alpha=alpha, connectionstyle='arc3,rad=' + f'{angle}', zorder=zorder, lw=width, shrinkA=shrink_factor, shrinkB=shrink_factor, joinstyle='miter', mutation_scale=1.5)
     return arc
 
 

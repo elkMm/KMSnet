@@ -100,6 +100,9 @@ def node_kms_emittance_connectivity(graph, node, beta, tol=TOL):
 
     return C
 
+
+
+
 def group_kms_emittance_connectivity(graph, beta, nodelist, P, tol=TOL):
     nodes, Z = kms_emittance(graph, beta)
     C = {}
@@ -138,25 +141,25 @@ def structural_subgraph_adj_matrix(graph, nodelist=None):
     '''
 
     nodes = list(graph.nodes)
+    N = len(nodes)
 
     if nodelist == None:
         nodelist = nodes
 
     R = out_deg_ratio_matrix(graph, nodes=nodes)
+    # Normalize the columns of R
+    for j in range(N):
+        col = R[:, j]
+        R[:, j] = remove_ith(col, j)
 
-    N = len(nodelist)
-    W = np.zeros((N, N))
+    M = len(nodelist)
+    W = np.zeros((M, M))
 
     for i, u in enumerate(nodelist):
         ii = nodes.index(u)
-        for j, v in enumerate(nodelist):
-            jj = nodes.index(v)
-            W[i][j] = R[ii][jj]
-
-    # Normalize the columns of W
-    for j in range(N):
-        col = W[:, j]
-        W[:, j] = remove_ith(col, j)
+        for k, v in enumerate(nodelist):
+            kk = nodes.index(v)
+            W[i][k] = R[ii][kk]
 
     return nodelist, W
 
@@ -179,6 +182,31 @@ def weighted_structural_subgraph(graph, nodelist=None):
     K.add_weighted_edges_from(E)
 
     return K
+
+def structural_connectivity_adj_list(graph, sources):
+    '''Returns theweighted  edge list of structural connectivity from 
+     the nodes in sources to the all their direct neighbors. '''
+    
+    nodes, S = node_structural_connectivity(graph)
+    adj_list = []
+
+    for v in sources:
+        Kv = S[v]
+        v_list = [(v, u, round(Kv[i], 6)) for i, u in enumerate(nodes) if (Kv[i] > 0.)]
+        adj_list += v_list
+
+    return adj_list
+
+
+
+    
+    
+
+
+
+
+
+
 
 
 

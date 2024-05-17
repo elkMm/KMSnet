@@ -46,16 +46,18 @@ def node_emittance_variation(graph, nodelist, beta_min, beta_max, num=100):
     '''Compute the emittance of each node in the 
     nodelist and for each value of beta ranging from beta_min to beta_max.'''
     nodes = list(graph.nodes)
+
+    interval = temperature_range(beta_min, beta_max, num=num)
     
-    if beta_min == beta_max:
-        interval = [beta_min]
-    else:
-        interval = list(np.linspace(beta_min, beta_max, num=num))
+    # if beta_min == beta_max:
+    #     interval = [beta_min]
+    # else:
+    #     interval = list(np.linspace(beta_min, beta_max, num=num))
     
     emittance = {'range': interval} | {node: [] for node in nodelist}
 
-    for _, beta in enumerate(interval):
-        matrix = emittance_matrix(graph, beta, nodes=nodes)
+    for _, T in enumerate(interval):
+        matrix = emittance_matrix(graph, 1. / T, nodes=nodes)
         for u in nodelist:
             i = nodes.index(u)
             emittance[u] += [sum(matrix[:, i]),]
@@ -326,7 +328,7 @@ def KMS_emittance_dist_entropy_variation(graph, beta_min, beta_max, num=50):
     return {'range': interval, 'entropy': H}
 
 
-def node_structural_state(graph, nodelist=None):
+def node_structural_connectivity(graph, nodelist=None):
     nodes = list(graph.nodes)
 
     if nodelist == None:
@@ -334,7 +336,7 @@ def node_structural_state(graph, nodelist=None):
     R = out_deg_ratio_matrix(graph, nodes=nodes)
     SS = {}
     for i, v in enumerate(nodelist):
-        SS[v] = R[:, i]
+        SS[v] = remove_ith(R[:, i], i)
         SS.copy()
 
     return nodes, SS
@@ -350,7 +352,7 @@ def node_structural_entropy(graph, nodelist=None):
     # if nodelist == None:
     #     nodelist = nodes
     # R = out_deg_ratio_matrix(graph, nodes=nodes)
-    SS = node_structural_state(graph, nodelist=nodelist)[1]
+    SS = node_structural_connectivity(graph, nodelist=nodelist)[1]
     H = {}
     for _, v in enumerate(nodelist):
         d = SS[v]

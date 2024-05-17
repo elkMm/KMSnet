@@ -83,6 +83,9 @@ def out_deg_ratio_matrix(graph, nodes=None):
     return R
 
 
+    
+
+
 def all_edges(edge_list, start_node, end_node):
     '''Returns all the edges starting from the given node to another end node
     in a directed multigraph.
@@ -96,14 +99,36 @@ def all_edges(edge_list, start_node, end_node):
 
     return edges
 
+
 def get_out_edges(graph, start_node):
     '''Returns all the edges from a given node.'''
     try:
-        edges = [edge for edge in graph.edges if edge[0] == start_node]
+        edges = [edge for edge in list(graph.edges) if edge[0] == start_node]
     except:
         edges = []
 
     return edges
+
+
+def is_out_neighbor(graph, source, target):
+    '''Returns True if the target node is an out-neighbor of the source node.'''
+    
+    edges = get_out_edges(graph, source)
+    if (len(edges) > 0) and (len([e for e in edges if (e[1] == target)]) > 0):
+        return True 
+    else:
+        return False
+    
+def out_neighbors(graph, source):
+    '''Returns all out-neighbors of the specified source node'''
+    edges = get_out_edges(graph, source)
+    
+    neighbors = []
+
+    if len(edges) > 0:
+        neighbors += [e[1] for e in edges]
+
+    return list(set(neighbors))
 
 
 def all_paths(graph, start_node):
@@ -345,3 +370,26 @@ def temperature_range(beta_min, beta_max, num=50):
         interval = list(np.linspace(1./beta_max, 1./beta_min, num=num))
     return interval
        
+
+def bootstrap_p_value(x, value, n_iter):
+    '''Calculate p-value of the given value given the array x as null hypothesis.
+
+    Parameters
+    ----------
+    x : array
+    value : float
+    n_iter : int
+    '''
+    return len([a for a in x if float(a) >= float(value)]) / float(n_iter)
+
+
+def regular_polygon_coord(k, radius=2.):
+    '''Generate k coordinates as vertices of a k-regular polygon'''
+    coord = []
+    for i in range(k):
+        angle = 2 * np.pi / k
+        x = radius * np.cos(i * angle)
+        y = radius * np.sin(i * angle)
+        coord += [(x, y),]
+    
+    return coord
