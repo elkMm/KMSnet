@@ -1,3 +1,4 @@
+from itertools import product
 import numpy as np
 from scipy import stats
 from scipy.stats import entropy
@@ -131,15 +132,16 @@ def out_neighbors(graph, source):
     return list(set(neighbors))
 
 
-def all_paths(graph, start_node):
+def all_paths(graph, start_node, end_node):
     '''
-    Returns all the paths from a node in a directed multigraph.
+    Returns all the paths from a node to another in a directed multigraph.
 
     Parameters
     ----------
     graph : NetworkX directed multigraph
 
     start_node : int or str
+    end_node : int or str
     
     visited: None or set
         Nodes visited.
@@ -162,13 +164,14 @@ def all_paths(graph, start_node):
 
     paths = []
     for out_e in out_edges:
-        paths += all_paths_starting_from_edge(graph, out_e)
+        paths += all_paths_starting_from_edge(graph, out_e, end_node)
 
     return paths
 
 
 
-def all_paths_starting_from_edge(graph, start_edge, traveled=None, path=None):
+def all_paths_starting_from_edge(graph, start_edge, end_node, traveled=None, path=None):
+    '''Find all the paths starting from a given edge and ending at the end_node.'''
 
     if traveled is None:
         traveled = set()
@@ -176,18 +179,92 @@ def all_paths_starting_from_edge(graph, start_edge, traveled=None, path=None):
         path = []
 
     traveled.add(start_edge)
-
-    path = path + [start_edge]
+    
+    if end_node == start_edge[1]:
+        path = path + [start_edge]
 
     paths = [path]
     next_node = start_edge[1]
 
     for out_edge in get_out_edges(graph, next_node):
         if out_edge not in traveled:
-            new_paths = all_paths_starting_from_edge(graph, out_edge, traveled.copy(), path.copy())
+            new_paths = all_paths_starting_from_edge(graph, out_edge, end_node, traveled.copy(), path.copy())
             paths.extend(new_paths)
 
     return paths
+
+def paths_2(edges, source, target):
+    '''Find all paths of length 2 from source to target.'''
+    source_outs = [e for e in edges if e[0] == source]
+    target_ins = [e for e in edges if e[1] == target]
+
+    paths = [(e, f) for e, f in product(source_outs, target_ins) if e[1] == f[0]]
+
+    return paths
+
+def npaths(edges, source, target, n):
+    '''Find all paths of length n from source to target.'''
+    paths = []
+    if n == 2:
+        paths = paths_2(edges, source, target)
+    elif n > 2:
+        source_outs = [e for e in edges if e[0] == source]
+        for e1 in source_outs:
+            paths_from = npaths(edges, e1[1], target, n - 1)
+            for path in paths_from:
+                paths.append((e1, ) + path)
+
+    
+    return paths
+
+
+# def paths_3(edges, source, target):
+#     '''Fing all the paths of length 3 from source to target.'''
+    
+#     source_outs = [e for e in edges if e[0] == source]
+#     paths3 = []
+
+#     for e1 in source_outs:
+#         paths2_from = paths_2(edges, e1[1], target)
+#         for e2, e3 in paths2_from:
+#             paths3.append((e1, e2, e3))
+
+#     return paths3
+
+# def paths_4(edges, source, target):
+#     '''Find all paths of length 4 from source to target.'''
+
+#     source_outs = [e for e in edges if e[0] == source]
+#     paths4 = []
+
+#     for e1 in source_outs:
+#         paths3_from = paths_3(edges, e1[1], target)
+#         for e2, e3, e4 in paths3_from:
+#             paths4.append((e1, e2, e3, e4))
+
+#     return paths4
+
+# def paths_5(edges, source, target):
+#     source_outs = [e for e in edges if e[0] == source]
+#     paths5 = []
+
+#     for e1 in source_outs:
+#         paths4_from = paths_4(edges, e1[1], target)
+#         for e2, e3, e4, e5 in paths4_from:
+#             paths5.append((e1, e2, e3, e4, e5))
+
+#     return paths5
+
+# def paths_6(edges, source, target):
+#     source_outs = [e for e in edges if e[0] == source]
+#     paths6 = []
+
+#     for e1 in source_outs:
+#         paths5_from = paths_5(edges, e1[1], target)
+#         for e2, e3, e4, e5, e6 in paths5_from:
+#             paths6.append((e1, e2, e3, e4, e5, e6))
+
+#     return paths6
 
 
 def vector_norm(vector):
@@ -393,3 +470,7 @@ def regular_polygon_coord(k, radius=2.):
         coord += [(x, y),]
     
     return coord
+
+
+def weibull(x,lam,k):
+    return (k / lam) * (x / lam)**(k - 1.) * np.exp(-(x / lam)**k)

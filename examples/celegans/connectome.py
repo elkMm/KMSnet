@@ -289,6 +289,9 @@ touch_sensitive_neurons = VA_neurons + DA_neurons + VB_neurons + DB_neurons + \
 
 extended_thermotaxis = thermotaxis_neurons + ['AIAL', 'AIAR', 'AIBL', 'AIBR', 'ASIL', 'ASIR']
 
+amphid_sensila = ['ADFL', 'ADFR', 'ADLL', 'ADLR', 'AFDL', 'AFDR', 'ASEL', 'ASER', 'ASGL', 'ASGR', 'ASHL', 'ASHR', 'ASIL', 'ASIR', 'ASJL', 'ASJR', 'ASKL', 'ASKR', 'AWAL', 'AWAR', 'AWBL', 'AWBR', 'AWCL', 'AWCR']
+cephalic_sensila = ['CEPVL', 'CEPVR', 'CEPDL', 'CEPDR']
+phasmid_sensila = ['PHAL', 'PHAR', 'PHBL', 'PHBR', 'PHCL', 'PHCR', 'PQR']
 
 CIRCUITS = {
     'CommandInterneurons': command_interneurons,
@@ -303,6 +306,9 @@ CIRCUITS = {
     'Olfactory': olfactory_neurons,
     'Chemorepulsion': chemorepulsion_neurons,
     'TouchInducedMovement': touch_sensitive_neurons,
+    'AmphidSensila': amphid_sensila,
+    'CephalicSensila': cephalic_sensila,
+    'PhasmidSensila': phasmid_sensila,
     'VA': VA_neurons,
     'VB': VB_neurons,
     'VD': VD_neurons,

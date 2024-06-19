@@ -8,8 +8,8 @@ from src.generators import random_sample_from_deg_seq
 
 
 
-def beta_feedback_coef_variation(graph, nodelist, beta_min, beta_max, num=50):
-    '''Calculate the beta-feedback coefficient of each node in nodelist and for
+def neural_integration_coefficient(graph, nodelist, beta_min, beta_max, num=50):
+    '''Calculate the Neural Integration Coefficient (NIC) of each node in nodelist and for
     every value of beta in the specified interval between beta_min and beta_max.'''
 
     interval = temperature_range(beta_min, beta_max, num=num)
@@ -31,13 +31,13 @@ def beta_feedback_coef_variation(graph, nodelist, beta_min, beta_max, num=50):
             recep_profile = Z[i, :]
             Zuu = recep_profile[i]
             d = nonzero_sum(recep_profile)
-            Coef[u] += [float(Zuu) / d, ]
+            Coef[u] += [1. - float(Zuu)/d, ]
             Coef.copy()
 
     return Coef
 
-def beta_kms_feedback_coef_ranking(graph, beta, nodelist=None):
-    '''Ranking of nodes by their KMS feedback coefficients. 
+def NIC_ranking(graph, beta, nodelist=None):
+    '''Ranking of nodes by their NIC. 
     
     The output is as a dictionary with nodes in nodelist as keys
     and the KMS feedback coefficient at inverse temperature beta as values.'''
@@ -51,8 +51,8 @@ def beta_kms_feedback_coef_ranking(graph, beta, nodelist=None):
         i = nodes.index(u)
         profile = Z[:, i]
         Zuu = profile[i]
-        d = nonzero_sum(Z[i, :])
-        coefs[u] = round(d / float(Zuu) / d, 6)
+        # d = nonzero_sum(Z[i, :])
+        coefs[u] = round(1. - float(Zuu), 6)
         coefs.copy()
     
     # sort the dict by values
@@ -61,7 +61,7 @@ def beta_kms_feedback_coef_ranking(graph, beta, nodelist=None):
     return {c[0]: c[1] for c in coefs}
 
 
-def node_kms_receptance_variation(graph, nodelist, beta_min, beta_max, num=50):
+def node_total_kms_receptance_variation(graph, nodelist, beta_min, beta_max, num=50):
     '''Return the incoming weight for each node in nodelist and 
     for the KMS state matrix for each beta in the interval.'''
 
@@ -102,8 +102,33 @@ def beta_kms_emittance_ranking(graph, beta, nodelist=None):
     return {w[0]: w[1] for w in weights}
 
 
-def beta_kms_receptance_ranking(graph, beta, nodelist=None):
-    '''Ranking of the nodes in nodelist based on the beta-KMS inweights.'''
+def kms_receptance_ranking(graph, beta, nodelist=None, averaging=False, with_feedback=None):
+    '''Ranking of the nodes in nodelist based on the beta-KMS receptance.'''
+    if nodelist == None:
+        nodelist = list(graph.nodes)
+
+    nodes, Z = kms_emittance(graph, beta)
+    N = len(nodes)
+    weights = {}
+    for u in nodelist:
+        i = nodes.index(u)
+        recep_prof = Z[i, :]
+        if with_feedback == None:
+            recep_prof[i] = 0.
+        s = sum(recep_prof)
+        if averaging == True:
+            s = s / N
+        weights[u] = float(round(s, 6))
+        weights.copy()
+
+    # Sort the weights by values in descending order
+    weights = sorted(weights.items(), key=lambda x : x[1], reverse=True)
+
+    return {w[0]: w[1] for w in weights}
+
+
+def NEP_entropy_ranking(graph, beta, nodelist=None, with_feedback=True):
+    '''Ranking of the nodes in nodelist based on the entropy of the beta-KMS emittances.'''
     if nodelist == None:
         nodelist = list(graph.nodes)
 
@@ -111,8 +136,10 @@ def beta_kms_receptance_ranking(graph, beta, nodelist=None):
     weights = {}
     for u in nodelist:
         i = nodes.index(u)
-        Z[i, :][i] = 0.
-        weights[u] = float(round(sum(Z[i, :]), 6))
+        profile = Z[:, i]
+        if with_feedback == False:
+            profile = remove_ith(profile, i)
+        weights[u] = float(round(entropy(profile), 6))
         weights.copy()
 
     # Sort the weights by values in descending order
@@ -139,7 +166,7 @@ def node_to_node_kms_flow_stream(graph, node, nodelist, beta_min, beta_max, num=
 
     return streams
 
-def structure_kms_state_divergence(graph, nodelist, beta):
+def structure_function_divergence(graph, nodelist, beta):
     '''Calculate the divergence between the structural connectivity vector of each node in nodelist and the corresponding KMS state at the given inverse temperature beta.
 
     This divergence is defined as 1 minus the Fidelity of both distributions.

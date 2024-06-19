@@ -284,14 +284,14 @@ def _curved_edge(edge, color='blue', arrowstyle='simple', width=0.3, shrink_fact
     n0, n1, route = edge
     x0,y0 = pos[n0]
     x1,y1 = pos[n1]
-    head_width = 1.5 * (1. + width)
+    head_width = 3 * (1. + width)
     head_length = 2 * (1. + width)
     # shrink = shrink_factor * 10.
     simple = f'Simple, head_width={head_width}, head_length={head_length}'
     wedge = f'Wedge, tail_width={1. + 1.2*width}, shrink_factor=0.1'
     anat = f'->, head_width={.5*width}, head_length={.1*width}'
     bracket = ArrowStyle(']-[', widthA=.0, lengthA=0., angleA=None, widthB=width, lengthB=2.*width, angleB=None)
-    fancy = f'fancy, head_length={head_length}, head_width={width}, tail_width={width}'
+    fancy = f'fancy, head_length={head_length}, head_width={width}, tail_width={.5*width}'
 
     style = simple 
     

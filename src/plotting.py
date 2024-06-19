@@ -133,18 +133,22 @@ def plot_kms_receptance_profile_entropy(graph,  nodelist, beta_min, beta_max, nu
 
 
 
-def plot_kms_receptance(graph, nodelist, beta_min, beta_max, num=50, colors=None, node_labels=None, nodes_removed=None, font_size=12):
+def plot_total_receptance(graph, nodelist, beta_min, beta_max, num=50, node_colors=None, node_labels=None, nodes_removed=None, font_size=12, figsize=(12,10)):
     plt.rcParams.update({
         "figure.autolayout": True,
         "text.usetex": True,
         "font.family": "Helvetica",
+        "figure.figsize": figsize,
         "font.size": font_size
     })
     nodes = list(graph.nodes)
-    weights = node_kms_receptance_variation(graph, nodelist, beta_min, beta_max, num=num)
+    weights = node_total_kms_receptance_variation(graph, nodelist, beta_min, beta_max, num=num)
 
-    if colors == None:
-        colors = get_colors(len(nodes), pastel_factor=.5)
+    colorlist = get_colors(len(nodes), pastel_factor=.5)
+
+    color_dict = {u: colorlist[nodes.index(u)] for u in nodelist}
+    if node_colors != None:
+        color_dict = node_colors
 
     xs = weights['range']
 
@@ -155,45 +159,48 @@ def plot_kms_receptance(graph, nodelist, beta_min, beta_max, num=50, colors=None
     
     for _, u in enumerate(nodelist):
         ys = weights[u]
-        uind = nodes.index(u)
-        color = colors[uind]
+        color = color_dict[u]
         label = u
         if labels[u] != '':
             label = labels[u]
-        plt.plot(xs, ys, color=color, label=label)
+        plt.plot(xs, ys, color=color, label=label, linewidth=2.0)
 
     if nodes_removed != None:
         E = list(graph.edges)
         graph.remove_edges_from([e for e in E if (e[0] in nodes_removed) or (e[1] in nodes_removed)])
-        weights2 = node_kms_receptance_variation(graph, nodelist, beta_min, beta_max, num=num)
+        weights2 = node_total_kms_receptance_variation(graph, nodelist, beta_min, beta_max, num=num)
         for _, v in enumerate(nodelist):
             if v not in nodes_removed:
                 Ys = weights2[v]
-                uind = nodes.index(v)
-                color = colors[uind]
+                # uind = nodes.index(v)
+                color = color_dict[v]
                 label = v
                 if labels[u] != '':
                     label = labels[u]
-                plt.plot(xs, Ys, '-.', color=color, label=label)
+                plt.plot(xs, Ys, '-.', color=color, label=label, linewidth=2.0)
     plt.xlabel(r'Temperature $1/\beta$')
-    plt.ylabel('Node KMS receptance')
+    plt.ylabel(r'Total $\beta$-receptance')
 
 
 
-def plot_feedback_coef_variation(graph, nodelist, beta_min, beta_max, num=100, colors=None, node_labels=None, font_size=12):
+def plot_NIC(graph, nodelist, beta_min, beta_max, num=100, node_colors=None, node_labels=None, font_size=12, figsize=(12,10)):
     plt.rcParams.update({
         "figure.autolayout": True,
         "text.usetex": True,
-        "font.family": "Times New Roman",
+        "font.family": "Helvetica",
+        "figure.figsize": figsize,
         "font.size": font_size
     })
 
     nodes = list(graph.nodes)
 
-    Coef = beta_feedback_coef_variation(graph, nodelist, beta_min, beta_max, num=num)
+    Coef = neural_integration_coefficient(graph, nodelist, beta_min, beta_max, num=num)
 
-    if colors == None:
-        colors = get_colors(len(nodes), pastel_factor=.5)
+    colorlist = get_colors(len(nodes), pastel_factor=.5)
+
+    color_dict = {u: colorlist[nodes.index(u)] for u in nodelist}
+    if node_colors != None:
+        color_dict = node_colors
 
     xs = Coef['range']
 
@@ -204,14 +211,14 @@ def plot_feedback_coef_variation(graph, nodelist, beta_min, beta_max, num=100, c
     
     for _, u in enumerate(nodelist):
         ys = Coef[u]
-        uind = nodes.index(u)
-        color = colors[uind]
+        # uind = nodes.index(u)
+        color = color_dict[u]
         label = u
         if labels[u] != '':
             label = labels[u]
-        plt.plot(xs, ys, color=color, label=label)
+        plt.plot(xs, ys, color=color, label=label, linewidth=2.0)
     plt.xlabel(r'Temperature $1/\beta$')
-    plt.ylabel('Feedback coefficient')
+    plt.ylabel('NIC')
     
 
 
@@ -219,7 +226,7 @@ def plot_node_emittance(graph, nodelist, beta_min, beta_max, num=100, node_label
     plt.rcParams.update({
         "figure.autolayout": True,
         "text.usetex": True,
-        "font.family": "Times New Roman",
+        "font.family": "Helvetica",
         "font.size": font_size
     })
 
@@ -244,22 +251,29 @@ def plot_node_emittance(graph, nodelist, beta_min, beta_max, num=100, node_label
 
 
 
-def plot_structure_kms_state_divergence(graph, nodelist, beta_min, beta_max, num=50, colors=None, node_labels=None, font_size=12):
+def plot_sfd(graph, nodelist, beta_min, beta_max, num=50, node_colors=None, node_labels=None, xticks=None, font_size=12, figsize=(10,6)):
     '''Plot the variation of the divergence between 
     structural connectivity and KMS states of nodes.'''
 
     plt.rcParams.update({
         "figure.autolayout": True,
         "text.usetex": True,
-        "font.family": "Times New Roman",
-        "font.size": font_size
+        "font.family": "Helvetica",
+        "font.size": font_size,
+        "figure.figsize": figsize,
     })
 
-    vertices, SS = node_structural_connectivity(graph)
+    ax = plt.gca()
+
+    nodes, SS = node_structural_connectivity(graph)
     xs = list(np.linspace(1./beta_max, 1./beta_min, num=num))
     
-    if colors == None:
-        colors = get_colors(len(vertices), pastel_factor=.5)
+
+    colorlist = get_colors(len(nodes), pastel_factor=.5)
+
+    color_dict = {u: colorlist[nodes.index(u)] for u in nodelist}
+    if node_colors != None:
+        color_dict = node_colors
 
     labels = defaultdict(lambda: '')
     if node_labels != None:
@@ -272,7 +286,7 @@ def plot_structure_kms_state_divergence(graph, nodelist, beta_min, beta_max, num
         beta = 1./T
         verts, Z = kms_emittance(graph, beta)
         for v in nodelist:
-            v_ind = vertices.index(v)
+            v_ind = nodes.index(v)
             k = verts.index(v)
             struc = remove_ith(SS[v], v_ind)
             prof = remove_ith(Z[:, v_ind], k)
@@ -281,19 +295,29 @@ def plot_structure_kms_state_divergence(graph, nodelist, beta_min, beta_max, num
             YS[v] += [div,]  
             YS.copy()  
 
-    for i, node in enumerate(nodelist):
+    for _, node in enumerate(nodelist):
         label = node
-        node_ind = vertices.index(node)
-        color = colors[node_ind]
+        # node_ind = nodes.index(node)
+        color = color_dict[node]
         ys = YS[node]
         if labels[node] != '':
             label = labels[node]
 
-        plt.plot(xs, ys, label=label, color=color)
+        plt.plot(xs, ys, label=label, color=color, linewidth=2.0)
+
+    # x_ticks = [round(t, 2) for t in ax.get_xticks(minor=False)]
+
+    # if xticks != None:
+    #     x_ticks += [round(t, 2) for t in xticks] 
+
+    # # Set xtick locations to the values of the array `x_ticks`
+    # ax.set_xticks(x_ticks)
 
     xlabel = r'Temperature $1/\beta$'    
     plt.xlabel(xlabel)
-    plt.ylabel('Fidelity to structure')
+    plt.ylabel(r'sfd (\%)')
+
+    
 
 def plot_node_kms_connectivity(graph, node, beta, tol=TOL, node_labels=None, node_colors=None):
     '''Plot the KMS connectivity of the node at inverse temperature beta.'''
@@ -327,18 +351,19 @@ def plot_node_kms_connectivity(graph, node, beta, tol=TOL, node_labels=None, nod
     # plt.show()
 
 
-def plot_node_kms_emittance_profile_entropy(graph, nodelist, beta_min, beta_max, num=50, colors=None, node_labels=None, font_size=12):
+def plot_neural_emittance_profile_entropy(graph, nodelist, beta_min, beta_max, num=50, with_feedback=True , node_colors=None, node_labels=None, font_size=12, figsize=(10,6)):
     '''Plot the variation of the entropy of each node KMS emittance in nodelist.'''
 
     plt.rcParams.update({
         "figure.autolayout": True,
         "text.usetex": True,
-        "font.family": "Times New Roman",
-        "font.size": font_size
+        "font.family": "Helvetica",
+        "font.size": font_size,
+        "figure.figsize": figsize,
     })
 
-    KMS = node_kms_emittance_profile_variation(graph, nodelist, beta_min, beta_max, num=num)
-    vertices, SS = node_structural_connectivity(graph, nodelist=nodelist)
+    KMS = node_kms_emittance_profile_variation(graph, nodelist, beta_min, beta_max, num=num, with_feedback=with_feedback)
+    # vertices, SS = node_structural_connectivity(graph, nodelist=nodelist)
 
     # H = node_kms_emittance_profile_entropy_range(graph, nodelist, beta_min, beta_max, num=num)
 
@@ -346,8 +371,13 @@ def plot_node_kms_emittance_profile_entropy(graph, nodelist, beta_min, beta_max,
 
     xs = KMS['range']
     nodes = list(graph.nodes)
-    if colors == None:
-        colors = get_colors(len(nodes), pastel_factor=.5)
+    
+    colorlist = get_colors(len(nodes), pastel_factor=.5)
+
+    color_dict = {u: colorlist[nodes.index(u)] for u in nodelist}
+    if node_colors != None:
+        color_dict = node_colors
+        
 
     # colors = get_colors(len(nodelist), pastel_factor=.5)
 
@@ -360,27 +390,26 @@ def plot_node_kms_emittance_profile_entropy(graph, nodelist, beta_min, beta_max,
     for _, u in enumerate(nodelist):
         profiles = KMS[u]
         ys = [entropy(profile) for _, profile in enumerate(profiles)]
-        u_struc = SS[u]
+        # u_struc = SS[u]
         label = u
-        i = nodes.index(u)
-        color = colors[i]
+        color = color_dict[u]
         if labels[u] != '':
             label = labels[u]
-        plt.plot(xs, ys, label=label, color=color)
+        plt.plot(xs, ys, 'o-', label=label, color=color, linewidth=2.5)
 
         # find and plot the structural entropy of node u
-        for step, _ in enumerate(xs):
-            ind = vertices.index(u)
-            u_prof = remove_ith(profiles[step], ind)
-            u_struc = remove_ith(u_struc, ind)
-            fid = fidelity(u_struc, u_prof)
+        # for step, _ in enumerate(xs):
+        #     ind = vertices.index(u)
+        #     u_prof = remove_ith(profiles[step], ind)
+        #     u_struc = remove_ith(u_struc, ind)
+        #     fid = fidelity(u_struc, u_prof)
             
-            if  is_qual(fid, 1., tol=1e-1):
-                plt.scatter(xs[step], entropy(u_prof), color=color)
+        #     if  is_qual(fid, 1., tol=1e-1):
+        #         plt.scatter(xs[step], entropy(u_prof), color=color)
 
     xlabel = r'Temperature $1/\beta$' 
     plt.xlabel(xlabel)
-    plt.ylabel('Node profile entropy')
+    plt.ylabel('NEP entropy')
     # plt.legend()
 
 def plot_node_kms_emittance_profile_diversity(graph, nodelist, beta_min, beta_max, num=50, node_labels=None, font_size=12):
@@ -388,7 +417,7 @@ def plot_node_kms_emittance_profile_diversity(graph, nodelist, beta_min, beta_ma
     plt.rcParams.update({
         "figure.autolayout": True,
         "text.usetex": True,
-        "font.family": "Times New Roman",
+        "font.family": "Helvetica",
         "font.size": font_size
     })
 
@@ -425,7 +454,7 @@ def plot_kms_states_js_divergence(graph, node_pairs, beta_min, beta_max, num=100
     plt.rcParams.update({
         "figure.autolayout": True,
         "text.usetex": True,
-        "font.family": "Times New Roman",
+        "font.family": "Helvetica",
         "font.size": font_size
     })
     nodes = list(graph.nodes)
@@ -474,7 +503,7 @@ def plot_kms_states_by_classes_divergence(graph, nodes_by_classes, node_pairs, b
     plt.rcParams.update({
         "figure.autolayout": True,
         "text.usetex": True,
-        "font.family": "Times New Roman",
+        "font.family": "Helvetica",
         "font.size": font_size
     })
     # nodes = list(graph.nodes)
@@ -529,18 +558,18 @@ def plot_kms_simplex_volume(graph, beta_min, beta_max, num=100, font_size=12):
     plt.rcParams.update({
         "figure.autolayout": True,
         "text.usetex": True,
-        "font.family": "Times New Roman",
+        "font.family": "Helvetica",
         "font.size": font_size
     })
-    nodes = list(graph.nodes)
+    # nodes = list(graph.nodes)
 
     if beta_min == beta_max:
         interval = [1./beta_min]
     else:
         interval = list(np.linspace(1./beta_max, 1./beta_min, num=num))
 
-    R = out_deg_ratio_matrix(graph, nodes=nodes)
-    V_R = linalg.det(R)
+    # R = out_deg_ratio_matrix(graph, nodes=nodes)
+    # V_R = linalg.det(R)
 
     xs = interval
     ys = []
@@ -551,8 +580,8 @@ def plot_kms_simplex_volume(graph, beta_min, beta_max, num=100, font_size=12):
         V_Z = linalg.det(Z)
         ys += [V_Z,]
 
-    plt.plot(xs, ys, '-', color='tab:red')
-    plt.plot(xs, [V_R] * len(xs), '--', color='tab:gray')
+    plt.plot(xs, ys, '-o', color='tab:red')
+    # plt.plot(xs, [V_R] * len(xs), '--', color='tab:gray')
     xlabel = r'Temperature $1/\beta$'
     plt.xlabel(xlabel)
     plt.ylabel('KMS Simplex volume')

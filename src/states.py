@@ -118,7 +118,7 @@ def node_kms_emittance_profile(graph, node, beta):
 
     return node_profile
 
-def node_kms_emittance_profile_variation(graph,  nodelist, beta_min, beta_max, num=50):
+def node_kms_emittance_profile_variation(graph,  nodelist, beta_min, beta_max, num=50, with_feedback=True):
     '''Return KMS emittances of nodes within a given interval.'''
 
     interval = temperature_range(beta_min, beta_max, num=num)
@@ -131,6 +131,8 @@ def node_kms_emittance_profile_variation(graph,  nodelist, beta_min, beta_max, n
         for u in nodelist:
             i = nodes.index(u)
             profile = Z[:, i]
+            if with_feedback == False:
+                profile = remove_ith(profile, i)
             KMSProfiles[u] += [profile,]
             KMSProfiles.copy()
 
@@ -144,7 +146,7 @@ def node_kms_emittance_profile_entropy(graph, node, beta):
 
 
 
-def node_kms_emittance_profile_entropy_range(graph, nodelist, beta_min, beta_max, num=50):
+def node_kms_emittance_profile_entropy_range(graph, nodelist, beta_min, beta_max, num=50, with_feedback=True):
     '''Compute the entropy of Gibbs profiles for each node in the 
     nodelist and for each value of beta in the range.'''
     # if beta_min == beta_max:
@@ -167,7 +169,7 @@ def node_kms_emittance_profile_entropy_range(graph, nodelist, beta_min, beta_max
     #         # profile = [x / float(s) for _, x in enumerate(profile)]
     #         H[u] += [entropy(profile),]
     #         H.copy()
-    KMS = node_kms_emittance_profile_variation(graph, nodelist, beta_min, beta_max, num=num)
+    KMS = node_kms_emittance_profile_variation(graph, nodelist, beta_min, beta_max, num=num, with_feedback=with_feedback)
     interval = KMS['range']
 
     H = {'range': interval} | {node: [] for node in nodelist}

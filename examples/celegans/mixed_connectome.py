@@ -122,13 +122,13 @@ bc = critical_inverse_temperature(G) # 4.295757002698898
 # beta_gd = 10 * beta_c + (52.265/100) * beta_c
 # beta_gd = 10.5 * beta_c
 
-bmin = bc + .000001
+bmin = bc + .001
 
 beta = 3.5*bc 
 
-bf = 1.06 * bc
-bs = 2.5 * bc
-# print(bc)
+bf = 1.07 * bc
+bs = 2.5 * bc # = 10.739392506747246
+
 
 
 # #### Draw structural circuits
@@ -144,7 +144,7 @@ bs = 2.5 * bc
 # struc_conn_f = open(f'./results/data/struc_connectivity/{name}_structural_connectivity.csv', 'w', newline='')
 # writer = csv.writer(struc_conn_f, delimiter=',')
 # writer.writerow([f'# Structural connectivity of the extended Thermotaxis circuit'])
-# writer.writerow(['neuron1,neuron2,weight'])
+# writer.writerow(['source,target,weight'])
 
 # for we in list(K.edges(data=True)):
 #     e = [str(we[0]),str(we[1]),float(we[2]['weight'])]
@@ -499,7 +499,7 @@ bs = 2.5 * bc
 # kms_conn_f = open(f'./results/data/kms_connectivity/surgery/{name}_{edges_name}_kms_connectivity_{b_factor}xbeta_c_{NITER}-iters.csv', 'w', newline='')
 # writer = csv.writer(kms_conn_f, delimiter=',')
 # writer.writerow([f'# KMS connectivity of the Thermotaxis circuit at inverse temperature of {b_factor}x beta_c'])
-# writer.writerow(['neuron1,neuron2,kms_weight,p-value'])
+# writer.writerow(['source,target,kms_weight,p-value'])
 
 # for k in con_sig:
 #     con_list = con_sig[k]
@@ -683,10 +683,34 @@ bs = 2.5 * bc
 
 
 
+# autapses = [e for e in updt_synapses if e[0] == e[1]]
+# RMDVR = [e[0] for e in updt_synapses if e[1] == 'RMDVR']
+# # print(len(set(autapses)))
+# # print(G.out_degree('RID'), G.in_degree('RID'))
+# # print(len(all_paths(G,'AFDR', 'AIYR')))
+# print(set(RMDVR))    
+# print(set(e[0] for e in autapses))
 
+# AFD_out = [e for e in updt_synapses if e[0] == 'AFDR']
+# RMD_in = [e for e in updt_synapses if e[1] == 'RMDVR']
 
-    
+# AFD_out_ends = [e[1] for e in AFD_out]
+# RMD_in_starts = [e[0] for e in RMD_in]
 
+# intermed = [f for f in updt_synapses if (f[0] in AFD_out_ends) and (f[1] in RMD_in_starts)]
+
+# one_hop = [(e, f) for e, f in product(AFD_out, RMD_in) if e[1] == f[0]]
+
+# two_hop = [(e1, e2, e3) for e1, e2, e3 in product(AFD_out, intermed, RMD_in)]
+
+# print(len(one_hop))
+
+# paths = npaths(list(G.edges), 'RID', 'URXL', 3)
+# paths = npaths(list(G.edges), 'AFDR', 'AIBR', 4)
+
+# # # path6 = paths_6(list(G.edges), 'AFDR', 'RMDVR')
+# # # print(set(e[0] for e in autapses))
+# print(len(paths))
 
 
 
