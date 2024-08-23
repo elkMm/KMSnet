@@ -8,8 +8,8 @@ from src.generators import random_sample_from_deg_seq
 
 
 
-def neural_integration_coefficient(graph, nodelist, beta_min, beta_max, num=50):
-    '''Calculate the Neural Integration Coefficient (NIC) of each node in nodelist and for
+def feedback_coef(graph, nodelist, beta_min, beta_max, num=50):
+    '''Calculate the feedback coefficient of each node in nodelist and for
     every value of beta in the specified interval between beta_min and beta_max.'''
 
     interval = temperature_range(beta_min, beta_max, num=num)
@@ -31,10 +31,31 @@ def neural_integration_coefficient(graph, nodelist, beta_min, beta_max, num=50):
             recep_profile = Z[i, :]
             Zuu = recep_profile[i]
             d = nonzero_sum(recep_profile)
-            Coef[u] += [1. - float(Zuu)/d, ]
+            Coef[u] += [float(Zuu) / d, ]
             Coef.copy()
 
     return Coef
+
+def feedback_coef_ranking(graph, beta, nodelist=None):
+    '''Ranking nodes by feedback coefficient.'''
+    if nodelist == None:
+        nodelist = sorted(list(graph.nodes))
+    
+    coefs = {}
+    nodes, Z = kms_emittance(graph, beta)
+    for u in nodelist:
+        i = nodes.index(u)
+        recep_profile = Z[i, :]
+        Zuu = recep_profile[i]
+        d = nonzero_sum(recep_profile)
+        coefs[u] = float(Zuu) / d
+        coefs.copy()
+
+    # sort the dict by values
+    coefs = sorted(coefs.items(), key=lambda x : x[1], reverse=True)
+
+    return coefs
+
 
 def NIC_ranking(graph, beta, nodelist=None):
     '''Ranking of nodes by their NIC. 
@@ -61,14 +82,13 @@ def NIC_ranking(graph, beta, nodelist=None):
     return {c[0]: c[1] for c in coefs}
 
 
-def node_total_kms_receptance_variation(graph, nodelist, beta_min, beta_max, num=50):
-    '''Return the incoming weight for each node in nodelist and 
-    for the KMS state matrix for each beta in the interval.'''
+def IC_variation(graph, nodelist, beta_min, beta_max, num=50):
+    '''Return the variation of the integration capacity for each node in nodelist and for the KMS state matrix for each beta in the interval.'''
 
     interval = temperature_range(beta_min, beta_max, num=num)
 
-    weights = {'range': interval} | {node: [] for node in nodelist}
-    # N = len(list(graph.nodes))
+    IC = {'temperature': interval} | {node: [] for node in nodelist}
+    N = len(list(graph.nodes))
     
     for _, T in enumerate(interval):
         beta = 1./T 
@@ -77,10 +97,10 @@ def node_total_kms_receptance_variation(graph, nodelist, beta_min, beta_max, num
             i = nodes.index(u)
             Z[i, :][i] = 0.
             # weight = sum(Z[i, :])
-            weights[u] += [sum(Z[i, :]),]
-            weights.copy()
+            IC[u] += [100. * sum(Z[i, :]) / (N - 1),]
+            IC.copy()
 
-    return weights
+    return IC
 
 
 def beta_kms_emittance_ranking(graph, beta, nodelist=None):
@@ -92,7 +112,7 @@ def beta_kms_emittance_ranking(graph, beta, nodelist=None):
     weights = {}
     for u in nodelist:
         i = nodes.index(u)
-        Z[i, :][i] = 0.
+        Z[:, i][i] = 0.
         weights[u] = float(round(sum(Z[:, i]), 6))
         weights.copy()
 
@@ -125,6 +145,29 @@ def kms_receptance_ranking(graph, beta, nodelist=None, averaging=False, with_fee
     weights = sorted(weights.items(), key=lambda x : x[1], reverse=True)
 
     return {w[0]: w[1] for w in weights}
+
+
+
+def IC_ranking(graph, beta, nodelist=None):
+    '''Ranking of the nodes in nodelist based on Integration Capacity.'''
+    if nodelist == None:
+        nodelist = list(graph.nodes)
+
+    nodes, Z = kms_emittance(graph, beta)
+    N = len(nodes)
+    ICs = {}
+    for u in nodelist:
+        i = nodes.index(u)
+        recep_prof = Z[i, :]
+        recep_prof[i] = 0.
+
+        ICs[u] = sum(recep_prof) / (N - 1)
+        ICs.copy()
+
+    # Sort the weights by values in descending order
+    ICs = sorted(ICs.items(), key=lambda x : x[1], reverse=True)
+
+    return ICs
 
 
 def NEP_entropy_ranking(graph, beta, nodelist=None, with_feedback=True):

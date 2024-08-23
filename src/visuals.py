@@ -3,14 +3,14 @@ from collections import defaultdict
 from matplotlib import cm, colors
 import matplotlib.pyplot as plt 
 import numpy as np
-from matplotlib.patches import Ellipse, Circle, FancyArrowPatch, PathPatch, RegularPolygon, ArrowStyle
+from matplotlib.patches import Ellipse, Circle, FancyArrowPatch, PathPatch, RegularPolygon, ArrowStyle, Wedge
 import mpl_toolkits.mplot3d.art3d as art3d
 from mpl_toolkits.mplot3d import proj3d
 
 import networkx as nx
 
 
-def draw_multi_digraph(G, pos=None, layout=nx.spring_layout, node_shape='round', node_size=.4, node_colors=None, node_labels=None, edgecolor='tab:gray', font_size=12, figsize=(10,10), ax=None):
+def draw_multi_digraph(G, pos=None, layout=nx.spring_layout, node_shape='round', node_size=.4, node_colors=None, node_labels=None, edgecolor='tab:gray', e_alpha=.2, font_size=12, figsize=(10,10), ax=None):
     '''
     Draw a directed multigraph.
 
@@ -72,7 +72,7 @@ def draw_multi_digraph(G, pos=None, layout=nx.spring_layout, node_shape='round',
     edges = G.edges
 
     for edge in edges:
-        draw_curved_edge(edge, color=edgecolor, pos=pos, ax=ax)
+        draw_curved_edge(edge, color=edgecolor, alpha=e_alpha, pos=pos, ax=ax)
 
     # if node_labels != None:
     #     # Draw node labels
@@ -97,8 +97,7 @@ def draw_multi_digraph(G, pos=None, layout=nx.spring_layout, node_shape='round',
     # plt.show()
 
 
-
-def draw_weighted_digraph(G, pos=None, layout=nx.spring_layout, node_shape=None, node_size=.4, node_colors=None, node_labels=None, edgecolor='tab:gray', arrowstyle='simple', arrow_shrink=None, font_size=12, figsize=(10,10), ax=None):
+def draw_weighted_digraph(G, pos=None, layout=nx.spring_layout, node_shape=None, node_size=.4, node_colors=None, node_labels=None, edgecolor='tab:gray', arrowstyle='simple', arrow_shrink=None, font_size=12, edge_factor=24,e_alpha=1., figsize=(10,10), ax=None, font_kws = dict(ha='center', va='center', fontweight='heavy', fontstretch='normal')):
     '''
     Draw a directed weighted digraph.
 
@@ -143,8 +142,12 @@ def draw_weighted_digraph(G, pos=None, layout=nx.spring_layout, node_shape=None,
         for n in node_labels:
             labels[n] = node_labels[n]
 
+    if isinstance(node_shape, str) and node_shape != '':
+        node_shape = {n: node_shape for n in list(G.nodes)}
+
     shapes = defaultdict(lambda: round_node)
-    if node_shape != None:
+
+    if (node_shape != None) and isinstance(node_shape, dict):
         for n in node_shape:
             if node_shape[n] == 'round':
                 shapes[n] = round_node
@@ -158,11 +161,10 @@ def draw_weighted_digraph(G, pos=None, layout=nx.spring_layout, node_shape=None,
     # if node_shape == 'polygon':
     #     draw_node = polygonal_node
     #     # width = node_size
-    node_kws = dict(fontweight='heavy', fontstretch='normal')
     for node in pos:
         x, y = pos[node]
         shapes[node]((x,y), facecolor=color_map[node], width=width, ax=ax)
-        ax.annotate(labels[node], xy=(x, y), fontsize=font_size, zorder=10, ha='center', va='center', **node_kws)
+        ax.annotate(labels[node], xy=(x, y), fontsize=font_size, zorder=10, **font_kws)
         xs.append(x)
         ys.append(y)
    
@@ -174,8 +176,8 @@ def draw_weighted_digraph(G, pos=None, layout=nx.spring_layout, node_shape=None,
 
     for w_edge in edges:
         edge = (w_edge[0], w_edge[1], 0)
-        weight = 24 * w_edge[2]['weight']
-        draw_curved_edge(edge, arrowstyle=arrowstyle, width=weight, alpha=1., color=edgecolor, shrink_factor=shrink_factor, pos=pos, ax=ax)
+        weight = edge_factor * w_edge[2]['weight']
+        draw_curved_edge(edge, arrowstyle=arrowstyle, width=weight, alpha=e_alpha, color=edgecolor, shrink_factor=shrink_factor, pos=pos, ax=ax)
 
     # if node_labels != None:
     #     # Draw node labels
@@ -246,7 +248,7 @@ def draw_flow_mode(G, pos, with_labels=False, node_labels=None, node_size=30, wi
     nx.draw_networkx(G, pos=pos, edgelist=edgelist, with_labels=with_labels, label=node_labels, node_size=node_size, width=width, alpha=alpha, node_color=node_color, edge_color=edge_color, edgecolors=edgecolors, ax=ax)
 
 
-def polygonal_node(xy, width=1., edgecolor='dimgray', facecolor='tab:blue', zorder=8, alpha=.4, ax=None):
+def polygonal_node(xy, width=1., edgecolor='dimgray', facecolor='tab:blue', zorder=8, alpha=.8, ax=None):
     '''Node in the form of polygon'''
 
     kwargs = dict(edgecolor=edgecolor, facecolor=facecolor, zorder=zorder, alpha=alpha)
@@ -255,7 +257,7 @@ def polygonal_node(xy, width=1., edgecolor='dimgray', facecolor='tab:blue', zord
 
 
 
-def round_node(xy, facecolor='yellow', width=0.06, edgecolor='dimgray', zorder=8, alpha=.4, ax=None):
+def round_node(xy, facecolor='yellow', width=0.06, edgecolor='dimgray', zorder=8, alpha=.6, ax=None):
     '''Draw a node given a dictionary of node positions.'''
     # if ax is None:
     #     ax = plt.gca()
@@ -268,7 +270,20 @@ def draw_curved_edge(edge, color='tab:gray',arrowstyle='simple', width=.2, alpha
     '''Draws curved edge given the source and range positions of the edge'''
 
     arc = _curved_edge(edge=edge, color=color, arrowstyle=arrowstyle, width=width, alpha=alpha, zorder=zorder, shrink_factor=shrink_factor, pos=pos)
+    if edge[0] == edge[1]:
+        arc = draw_self_loop(edge, edgecolor=color, alpha=alpha, zorder=zorder, pos=pos, ax=ax)
     ax.add_patch(arc)
+
+def draw_self_loop(edge, radius=1.2, facecolor='none', edgecolor='tab:gray', alpha=.4, zorder=1, pos=None, ax=None):
+    '''Draw a self-loop when the edge connect a node to itself.'''
+    n0, n1, route = edge # we assume n0 == n1
+    x, y = pos[n0]
+    x0 = x + radius + route/10.
+    y0 = y 
+    loop = Circle((x0, y0), radius=radius + route/10., alpha=alpha, zorder=1, facecolor=facecolor, edgecolor=edgecolor)
+    return loop
+    
+
 
 
 def _node(xy, color='tab:red', width=0.02, edgecolor='dimgray', zorder=5, alpha=0.6):
@@ -285,7 +300,7 @@ def _curved_edge(edge, color='blue', arrowstyle='simple', width=0.3, shrink_fact
     x0,y0 = pos[n0]
     x1,y1 = pos[n1]
     head_width = 3 * (1. + width)
-    head_length = 2 * (1. + width)
+    head_length = 6 * (1. + width)
     # shrink = shrink_factor * 10.
     simple = f'Simple, head_width={head_width}, head_length={head_length}'
     wedge = f'Wedge, tail_width={1. + 1.2*width}, shrink_factor=0.1'
@@ -306,7 +321,7 @@ def _curved_edge(edge, color='blue', arrowstyle='simple', width=0.3, shrink_fact
         style = fancy
         # linestyle = '-'
 
-    angle = (.1 + int(route)/100.)
+    angle = (.1 + int(route)/80.)
     arc = FancyArrowPatch((x0,y0),(x1,y1), linestyle=linestyle, arrowstyle=style, color=color, alpha=alpha, connectionstyle='arc3,rad=' + f'{angle}', zorder=zorder, lw=width, shrinkA=shrink_factor, shrinkB=shrink_factor, joinstyle='miter', mutation_scale=1.5)
     return arc
 

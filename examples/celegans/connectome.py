@@ -170,8 +170,10 @@ func_links = [('AFDR', 'AIZR'), ('AFDL', 'AIZL'), ('AWCL', 'AIZL')]
 
 
 S = nx.MultiDiGraph()
-S.add_nodes_from(['VC06'])
+# S.add_nodes_from(['VC06'])
 S.add_edges_from(synapses)
+
+
 
 # S_bar = conjugate_graph(S)
 
@@ -186,7 +188,9 @@ S.add_edges_from(synapses)
 
 # G = configuration_model_from_directed_multigraph(S)
 
-beta_c = critical_inverse_temperature(S) # 3.998629949388744
+# beta_c = critical_inverse_temperature(S) # 3.998629949388744
+
+# print(S.in_degree('VC06'))
 
 # betabar_c = critical_inverse_temperature(S_bar)
 
@@ -194,11 +198,11 @@ beta_c = critical_inverse_temperature(S) # 3.998629949388744
 # beta_gd = 10 * beta_c + (52.265/100) * beta_c
 # beta_gd = 10.5 * beta_c
 
-beta_min = beta_c + .000001
+# beta_min = beta_c + .000001
 
-beta = 3.5*beta_c 
+# beta = 3.5*beta_c 
 
-beta_f = 1.06 * beta_c
+# beta_f = 1.06 * beta_c
 
 # ## Reference beta: 1.8
 
@@ -289,6 +293,8 @@ touch_sensitive_neurons = VA_neurons + DA_neurons + VB_neurons + DB_neurons + \
 
 extended_thermotaxis = thermotaxis_neurons + ['AIAL', 'AIAR', 'AIBL', 'AIBR', 'ASIL', 'ASIR']
 
+reduced_chemosensory = ['ASHL', 'ASHR', 'ASKL', 'ASKR', 'PHAL', 'PHAR', 'PHBL', 'PHBR']
+
 amphid_sensila = ['ADFL', 'ADFR', 'ADLL', 'ADLR', 'AFDL', 'AFDR', 'ASEL', 'ASER', 'ASGL', 'ASGR', 'ASHL', 'ASHR', 'ASIL', 'ASIR', 'ASJL', 'ASJR', 'ASKL', 'ASKR', 'AWAL', 'AWAR', 'AWBL', 'AWBR', 'AWCL', 'AWCR']
 cephalic_sensila = ['CEPVL', 'CEPVR', 'CEPDL', 'CEPDR']
 phasmid_sensila = ['PHAL', 'PHAR', 'PHBL', 'PHBR', 'PHCL', 'PHCR', 'PQR']
@@ -306,6 +312,7 @@ CIRCUITS = {
     'Olfactory': olfactory_neurons,
     'Chemorepulsion': chemorepulsion_neurons,
     'TouchInducedMovement': touch_sensitive_neurons,
+    'ReducedChemosensory': reduced_chemosensory,
     'AmphidSensila': amphid_sensila,
     'CephalicSensila': cephalic_sensila,
     'PhasmidSensila': phasmid_sensila,
@@ -325,8 +332,13 @@ CIRCUITS = {
     'AIZ': ['AIZL', 'AIZR'],
     'RIA': ['RIAL', 'RIAR'],
     'RIB': ['RIBL', 'RIBR'],
-    'ASE': ['ASEL', 'ASER']
+    'ASE': ['ASEL', 'ASER'],
+    'BackwardLocomotion': VA_neurons + DA_neurons + AS_neurons + ['AVAL', 'AVAR', 'AVDL', 'AVDR', 'AVEL', 'AVER'] + ['LUAL', 'LUAR', 'ALML', 'ALMR'],
+    'ForwardLocomotion': VB_neurons + DB_neurons + ['AVBL', 'AVBR','PVCL', 'PVCR'] + ['PLML', 'PLMR'],
+    'LocomotionCoordination': VD_neurons + DD_neurons
 }
+
+
 
 
 # nodelist = list(S.nodes)

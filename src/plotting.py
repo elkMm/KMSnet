@@ -25,7 +25,7 @@ from .kms_graphs import node_kms_emittance_connectivity
 from .node_classes import node_kms_emittance_profile_by_classes
 
 
-def plot_node_kms_stream_variation(graph, sources, targets, beta_min, beta_max, linestyle=None, num=100, colors=None, node_labels=None, font_size=12):
+def plot_relative_PFC_variation(graph, sources, targets, beta_min, beta_max, linestyle=None, num=100, node_colors=None, node_labels=None, font_size=12):
 
     plt.rcParams.update({
         "figure.autolayout": True,
@@ -38,28 +38,32 @@ def plot_node_kms_stream_variation(graph, sources, targets, beta_min, beta_max, 
 
     if linestyle == None:
         linestyle = ['-'] * len(sources)
+    colorlist = get_colors(len(nodes), pastel_factor=.5)
+
+    color_dict = {u: colorlist[nodes.index(u)] for u in targets}
+    if node_colors != None:
+        color_dict = node_colors
+    
+    labels = defaultdict(lambda: '')
+    if node_labels != None:
+        for n in node_labels:
+            labels[n] = node_labels[n]
 
     for i, source in enumerate(sources):
         streams = node_to_node_kms_flow_stream(graph, source, targets, beta_min, beta_max)
 
-        if colors == None:
-            colors = get_colors(len(nodes), pastel_factor=.5)
 
-
-        labels = defaultdict(lambda: '')
-        if node_labels != None:
-            for n in node_labels:
-                labels[n] = node_labels[n]
+       
 
         xs = streams['range']
         for u in [n for n in targets if n != source]:
             ys = streams[u]
             l = labels[u]
-            color = colors[nodes.index(u)]
-            plt.plot(xs, ys, linestyle[i], label=f'{source}' + r'$\rightarrow$' + f'{l}', color=color)
+            color = color_dict[u]
+            plt.plot(xs, ys, linestyle[i], label=f'{source}' + r'$\rightarrow$' + f'{l}', color=color, linewidth=3.0)
     plt.xlabel(r'Temperature $1/\beta$')
-    plt.ylabel('KMS connectivity weight')
-    # plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='8', loc='upper left')
+    plt.ylabel('PFC')
+    
 
 
 def plot_node_kms_streams_clustering(graph, source, targets, beta_min, beta_max, num=100, font_size=12):
@@ -133,7 +137,7 @@ def plot_kms_receptance_profile_entropy(graph,  nodelist, beta_min, beta_max, nu
 
 
 
-def plot_total_receptance(graph, nodelist, beta_min, beta_max, num=50, node_colors=None, node_labels=None, nodes_removed=None, font_size=12, figsize=(12,10)):
+def plot_IC(graph, nodelist, beta_min, beta_max, num=50, node_colors=None, node_labels=None, nodes_removed=None, font_size=12, figsize=(12,10)):
     plt.rcParams.update({
         "figure.autolayout": True,
         "text.usetex": True,
@@ -142,7 +146,7 @@ def plot_total_receptance(graph, nodelist, beta_min, beta_max, num=50, node_colo
         "font.size": font_size
     })
     nodes = list(graph.nodes)
-    weights = node_total_kms_receptance_variation(graph, nodelist, beta_min, beta_max, num=num)
+    IC = IC_variation(graph, nodelist, beta_min, beta_max, num=num)
 
     colorlist = get_colors(len(nodes), pastel_factor=.5)
 
@@ -150,7 +154,7 @@ def plot_total_receptance(graph, nodelist, beta_min, beta_max, num=50, node_colo
     if node_colors != None:
         color_dict = node_colors
 
-    xs = weights['range']
+    xs = IC['temperature']
 
     labels = defaultdict(lambda: '')
     if node_labels != None:
@@ -158,7 +162,7 @@ def plot_total_receptance(graph, nodelist, beta_min, beta_max, num=50, node_colo
             labels[n] = node_labels[n]
     
     for _, u in enumerate(nodelist):
-        ys = weights[u]
+        ys = IC[u]
         color = color_dict[u]
         label = u
         if labels[u] != '':
@@ -168,22 +172,22 @@ def plot_total_receptance(graph, nodelist, beta_min, beta_max, num=50, node_colo
     if nodes_removed != None:
         E = list(graph.edges)
         graph.remove_edges_from([e for e in E if (e[0] in nodes_removed) or (e[1] in nodes_removed)])
-        weights2 = node_total_kms_receptance_variation(graph, nodelist, beta_min, beta_max, num=num)
+        weights2 = IC_variation(graph, nodelist, beta_min, beta_max, num=num)
         for _, v in enumerate(nodelist):
             if v not in nodes_removed:
                 Ys = weights2[v]
                 # uind = nodes.index(v)
                 color = color_dict[v]
                 label = v
-                if labels[u] != '':
-                    label = labels[u]
-                plt.plot(xs, Ys, '-.', color=color, label=label, linewidth=2.0)
+                if labels[v] != '':
+                    label = labels[v]
+                plt.plot(xs, Ys, ':', color=color, label=label, linewidth=2.0)
     plt.xlabel(r'Temperature $1/\beta$')
-    plt.ylabel(r'Total $\beta$-receptance')
+    plt.ylabel(r'IC ($\%$)')
 
 
 
-def plot_NIC(graph, nodelist, beta_min, beta_max, num=100, node_colors=None, node_labels=None, font_size=12, figsize=(12,10)):
+def plot_feedbac_coef(graph, nodelist, beta_min, beta_max, num=100, node_colors=None, node_labels=None, font_size=12, figsize=(12,10)):
     plt.rcParams.update({
         "figure.autolayout": True,
         "text.usetex": True,
@@ -194,7 +198,7 @@ def plot_NIC(graph, nodelist, beta_min, beta_max, num=100, node_colors=None, nod
 
     nodes = list(graph.nodes)
 
-    Coef = neural_integration_coefficient(graph, nodelist, beta_min, beta_max, num=num)
+    Coef = feedback_coef(graph, nodelist, beta_min, beta_max, num=num)
 
     colorlist = get_colors(len(nodes), pastel_factor=.5)
 
@@ -218,7 +222,7 @@ def plot_NIC(graph, nodelist, beta_min, beta_max, num=100, node_colors=None, nod
             label = labels[u]
         plt.plot(xs, ys, color=color, label=label, linewidth=2.0)
     plt.xlabel(r'Temperature $1/\beta$')
-    plt.ylabel('NIC')
+    plt.ylabel('Feedback coefficient')
     
 
 
@@ -245,8 +249,8 @@ def plot_node_emittance(graph, nodelist, beta_min, beta_max, num=100, node_label
         if labels[u] != '':
             label = labels[u]
         plt.plot(x, y, label=label)
-    plt.xlabel('Inverse temperature')
-    plt.ylabel('Node emittance')
+    plt.xlabel(r'Temperature $1/\beta$')
+    plt.ylabel('Emittance volume')
     plt.legend()
 
 
@@ -585,3 +589,36 @@ def plot_kms_simplex_volume(graph, beta_min, beta_max, num=100, font_size=12):
     xlabel = r'Temperature $1/\beta$'
     plt.xlabel(xlabel)
     plt.ylabel('KMS Simplex volume')
+
+
+def plot_avg_total_receptance(graph, beta_min, beta_max, num=100, font_size=12, figsize=(10,6)):
+    '''Plot the variation average total receptance.'''
+
+    plt.rcParams.update({
+        "figure.autolayout": True,
+        "text.usetex": True,
+        "font.family": "Helvetica",
+        "font.size": font_size,
+        "figure.figsize": figsize,
+    })
+    N = len(graph.nodes)
+    xs = temperature_range(beta_min, beta_max, num=num)
+    ys = []
+
+    for _, T in enumerate(xs):
+        beta = 1./T 
+        nodes, Z = kms_emittance(graph, beta)
+        y = 0.
+        for i, _ in enumerate(nodes):
+            Y = Z[i, :]
+            Y[i] = 0.
+            y += sum(Y) / (N-1)
+        ys += [y,]
+
+    plt.plot(xs, ys)
+    xlabel = r'Temperature $1/\beta$'
+    plt.xlabel(xlabel)
+    plt.ylabel('Mean total receptance')
+
+
+        

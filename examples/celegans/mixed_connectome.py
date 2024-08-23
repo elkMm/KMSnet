@@ -29,7 +29,7 @@ from neuron_positions import *
 from src.read_write import *
 
 
-from connectome import neuron_positions, neurons, neuron_by_classes, neuron_cls, node_colors, node_labels, CIRCUITS, blue_sky
+from connectome import neuron_positions, neurons, interNeurons, sensoryNeurons, motorNeurons, neuron_by_classes, neuron_cls, node_colors, node_labels, CIRCUITS, blue_sky, SE_color, MO_color, IN_color
 
 
 default_edge_color = '#bfb4b2'
@@ -98,7 +98,7 @@ func_edge_color = '#0394ad'
 
 
 ### WORKING WITH THE UPDATED DATASET
-up_conn_f = open('../data/mixed/herm_somatic_connectome.csv', 'r', newline='')
+up_conn_f = open('../data/merged/herm_somatic_connectome.csv', 'r', newline='')
 syn_rows = [line.strip().split(',') for line in up_conn_f.readlines()[3:]]
 
 updt_synapses = []
@@ -126,7 +126,7 @@ bmin = bc + .001
 
 beta = 3.5*bc 
 
-bf = 1.07 * bc
+bf = 1.05 * bc
 bs = 2.5 * bc # = 10.739392506747246
 
 
@@ -705,14 +705,38 @@ bs = 2.5 * bc # = 10.739392506747246
 
 # print(len(one_hop))
 
-# paths = npaths(list(G.edges), 'RID', 'URXL', 3)
-# paths = npaths(list(G.edges), 'AFDR', 'AIBR', 4)
+# paths = npaths(list(G.edges), 'AFDR', 'RMDVR', 3)
+# paths = npaths(list(G.edges), 'AFDR', 'RMDVR', 3)
 
-# # # path6 = paths_6(list(G.edges), 'AFDR', 'RMDVR')
-# # # print(set(e[0] for e in autapses))
+# # # # # # path6 = paths_6(list(G.edges), 'AFDR', 'RMDVR')
+# # # # # # print(set(e[0] for e in autapses))
 # print(len(paths))
+# n = 'RID'
+# print(G.out_degree(n), G.in_degree(n))
+# print(sorted(list(G.nodes)))
+
+# paths = npaths(G, 'RID', 'URXL', 24)
 
 
+
+### draw multi digraph
+# font_kws = dict(fontweight='normal', fontstretch='normal')
+
+# # # ax = plt.gca()
+
+# width = .6
+# draw_multi_digraph(G, pos={n: neuron_positions[n] for n in G.nodes}, node_colors=node_colors, node_shape='polygon', node_labels={n: node_labels[n] for n in G.nodes}, e_alpha=.12, font_size=6, figsize=(12,10))
+# plt.text(-17.3, -10., 'Neurons', fontsize=12, zorder=10, **font_kws)
+# polygonal_node(xy=(-17., -11.), width=width, facecolor=SE_color, ax=plt.gca())
+# plt.text(-16.5, -11.3, 'Sensory', fontsize=12, zorder=10, **font_kws)
+
+# polygonal_node(xy=(-17., -12.), width=width, facecolor=IN_color, ax=plt.gca())
+# plt.text(-16.5, -12.3,'Inter', fontsize=12, zorder=10, **font_kws)
+
+# polygonal_node(xy=(-17., -13), width=width, facecolor=MO_color, ax=plt.gca())
+# plt.text(-16.5, -13.3,'Motor', fontsize=12, zorder=10, **font_kws)
+# # plt.show()
+# plt.savefig(f'./results/newConnectome/multigraph.jpeg', dpi=300, bbox_inches='tight')
 
 
 

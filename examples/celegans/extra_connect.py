@@ -163,3 +163,41 @@ ES.add_edges_from(ext_connections)
 #     plt.show()
 
 
+
+###### DEMO 
+from scipy.cluster.hierarchy import fcluster
+
+# Generate synthetic data
+np.random.seed(42)
+data = np.random.rand(10, 12)
+df = pd.DataFrame(data, columns=[f'Feature_{i}' for i in range(12)])
+
+# Create the clustermap
+clustergrid = sns.clustermap(df, method='average', metric='euclidean')
+
+# Extract the linkage matrix
+linkage_matrix = clustergrid.dendrogram_row.linkage
+
+# Form clusters using the linkage matrix
+# Define the number of clusters or a distance threshold
+n_clusters = 3
+cluster_labels = fcluster(linkage_matrix, n_clusters, criterion='maxclust')
+
+# Add the cluster labels to the DataFrame for easy access
+df['Cluster'] = cluster_labels
+
+# Print the resulting clusters
+print(df)
+
+# Optionally, plot the data points color-coded by their cluster
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(10, 8))
+for cluster in range(1, n_clusters + 1):
+    subset = df[df['Cluster'] == cluster]
+    plt.scatter(subset.index, subset.iloc[:, 0], label=f'Cluster {cluster}')
+plt.legend()
+plt.title('Data points color-coded by their cluster')
+plt.xlabel('Sample Index')
+plt.ylabel('Feature_0')
+plt.show()

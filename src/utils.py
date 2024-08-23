@@ -1,5 +1,6 @@
 from itertools import product
 import numpy as np
+from numpy.linalg import matrix_power
 from scipy import stats
 from scipy.stats import entropy
 import networkx as nx
@@ -205,6 +206,8 @@ def paths_2(edges, source, target):
 def npaths(edges, source, target, n):
     '''Find all paths of length n from source to target.'''
     paths = []
+    if n == 1:
+        paths = all_edges(edges, source, target)
     if n == 2:
         paths = paths_2(edges, source, target)
     elif n > 2:
@@ -213,58 +216,31 @@ def npaths(edges, source, target, n):
             paths_from = npaths(edges, e1[1], target, n - 1)
             for path in paths_from:
                 paths.append((e1, ) + path)
-
     
     return paths
 
+def number_of_paths(graph, source, target, k):
+    '''Find the number of paths from source to target using the powers of
+    the adjacency matrix.'''
+    nodes = list(graph.nodes)
+    A = adjacency_matrix(graph, nodes=nodes)
+    Ak = matrix_power(A, k)
+    i = nodes.index(source)
+    j = nodes.index(target)
+    a = Ak[i][j]
+    if a < 0.:
+        a = 0.
+    return a
 
-# def paths_3(edges, source, target):
-#     '''Fing all the paths of length 3 from source to target.'''
-    
-#     source_outs = [e for e in edges if e[0] == source]
-#     paths3 = []
 
-#     for e1 in source_outs:
-#         paths2_from = paths_2(edges, e1[1], target)
-#         for e2, e3 in paths2_from:
-#             paths3.append((e1, e2, e3))
-
-#     return paths3
-
-# def paths_4(edges, source, target):
-#     '''Find all paths of length 4 from source to target.'''
-
-#     source_outs = [e for e in edges if e[0] == source]
-#     paths4 = []
-
-#     for e1 in source_outs:
-#         paths3_from = paths_3(edges, e1[1], target)
-#         for e2, e3, e4 in paths3_from:
-#             paths4.append((e1, e2, e3, e4))
-
-#     return paths4
-
-# def paths_5(edges, source, target):
-#     source_outs = [e for e in edges if e[0] == source]
-#     paths5 = []
-
-#     for e1 in source_outs:
-#         paths4_from = paths_4(edges, e1[1], target)
-#         for e2, e3, e4, e5 in paths4_from:
-#             paths5.append((e1, e2, e3, e4, e5))
-
-#     return paths5
-
-# def paths_6(edges, source, target):
-#     source_outs = [e for e in edges if e[0] == source]
-#     paths6 = []
-
-#     for e1 in source_outs:
-#         paths5_from = paths_5(edges, e1[1], target)
-#         for e2, e3, e4, e5, e6 in paths5_from:
-#             paths6.append((e1, e2, e3, e4, e5, e6))
-
-#     return paths6
+def npath_avg(graph,k):
+    '''Compute the average number of paths of length k between node pairs.'''
+    A = adjacency_matrix(graph)
+    Ak = matrix_power(A, k)
+    m = np.mean(Ak)
+    if m < 0.:
+        m = 0.
+    return m
 
 
 def vector_norm(vector):
@@ -435,6 +411,15 @@ def remove_ith(x, i):
 
     return x
 
+def remove_diagonal(matrix):
+    '''Remove the diagonal in a column stochastic matrix and normalize each column.'''
+
+    for i in range(len(matrix)):
+        col = matrix[:, i]
+        matrix[:, i] = remove_ith(col, i)
+    
+    return matrix
+
 def normalize(x):
     s = nonzero_sum(x)
     return [a / float(s) for _, a in enumerate(x)]
@@ -474,3 +459,23 @@ def regular_polygon_coord(k, radius=2.):
 
 def weibull(x,lam,k):
     return (k / lam) * (x / lam)**(k - 1.) * np.exp(-(x / lam)**k)
+
+
+def riemann_sum(x, y):
+    '''Calculate the area under the curve represented by the y as a function of x and limited by the vertical lines with x-coordinates min(x) and max(x).
+
+    Parameters
+    ----------
+    x, y : array of same size.
+    '''
+    riemann = 0.
+
+    try:
+        len(x) == len(y)
+    except Exception:
+        print('arrays x and y must be of the same size!')
+
+    for i in range(len(x)-1):
+        riemann += (x[i+1] - x[i]) * y[i+1]
+
+    return riemann

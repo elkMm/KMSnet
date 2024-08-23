@@ -30,7 +30,7 @@ from neuron_positions import *
 from connectome import synapses, S, neuron_positions, node_colors, node_labels, CIRCUITS, blue_sky
 
 
-neurons = list(S.nodes)
+# neurons = list(S.nodes)
 # cook_file = '../data/Cook_connectome_adj_matrices.xlsx'
 
 # workbook = load_workbook(cook_file)
@@ -103,26 +103,26 @@ neurons = list(S.nodes)
 #         writer.writerow([str(l[0]),str(l[1]),l[2],str(l[3])])
 
 ## Read the new edges for the somatic connectome: 280 neurons
-new_syn_file = open('../data/updated_connectome.csv', 'r', newline='')
-syn_rows = [line.strip().split(',') for line in new_syn_file.readlines()[2:]]
+# new_syn_file = open('../data/updated_connectome.csv', 'r', newline='')
+# syn_rows = [line.strip().split(',') for line in new_syn_file.readlines()[2:]]
 
-new_connections = []
+# new_connections = []
 
-for r in syn_rows:
-    new_connections += [(r[0], r[1]),] * int(r[2])
+# for r in syn_rows:
+#     new_connections += [(r[0], r[1]),] * int(r[2])
 
 
 
-# ## Compare new connectome with the old one
+# # ## Compare new connectome with the old one
 
-# added_connect = [e for e in list(set(new_connections)) if e not in  list(set(synapses))]
+# # added_connect = [e for e in list(set(new_connections)) if e not in  list(set(synapses))]
 
-# print(len(added_connect))
-# Study the graph of the new connectome
+# # print(len(added_connect))
+# # Study the graph of the new connectome
 
-NS = nx.MultiDiGraph()
-# NS.add_nodes_from(neurons)
-NS.add_edges_from(new_connections)
+# NS = nx.MultiDiGraph()
+# # NS.add_nodes_from(neurons)
+# NS.add_edges_from(new_connections)
 
 # nb_c = critical_inverse_temperature(NS) # = 4.495504693131899, T_c =  0.2224444346655384
 # print(len(NS.nodes))
@@ -165,3 +165,4 @@ NS.add_edges_from(new_connections)
 
 
 # print([n for n in neurons if n not in list(NS.nodes)])
+
