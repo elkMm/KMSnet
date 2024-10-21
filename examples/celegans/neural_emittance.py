@@ -484,11 +484,11 @@ NEURONTYPES = json.load(open('../data/neuron_types.json'))
 
 ######## DIVERGENCE/FIDELITY METRIC ########
 # name = 'Thermotaxis'
-name = 'all'
-# # V = CIRCUITS[name]
-# # # V = NEURONTYPES['motor']
-# name = 'connectome'
-# V = sorted(list(G.nodes))
+# name = 'all'
+# # # V = CIRCUITS[name]
+# # # # V = NEURONTYPES['motor']
+name = 'connectome'
+V = sorted(list(G.nodes))
 # # # # # # # # # beta_factor = 1.035
 # # # # # # # # # b = beta_factor * bc
 # # # # # # # # # print(1. / (b))
@@ -503,9 +503,9 @@ name = 'all'
 # plt.savefig(f'./results/newConnectome/divergence/{name}_sfd.pdf', dpi=300, bbox_inches='tight')
 # plt.close()
 # # print(1. / (1.5 * bc))
-# beta_factor = 1.01
+# beta_factor = 1.9
 # b = beta_factor * bc
-# # # #### SAVE divergence data 
+# # # # # #### SAVE divergence data 
 # DIV = structure_function_divergence(G, V, b)
 
 # DIV = sorted(DIV, key=lambda x : x[1], reverse=True)
@@ -527,17 +527,18 @@ name = 'all'
 #         "figure.autolayout": True,
 #         "text.usetex": True,
 #         "font.family": "Helvetica",
-#         "figure.figsize": (12,10),
+#         "figure.figsize": (16,8),
 #         "font.size": 30
 #     })
 # ax = plt.gca()
 # for i, div in enumerate(DIV):
-#     plt.scatter(i, div[1], color=node_colors[div[0]], s=40, edgecolors='dimgray', marker='o', alpha=.5)
-#     ax.annotate(node_labels[div[0]], (i + .005, div[1] + .005), fontsize=10)
+#     plt.scatter(i, div[1], color='white', s=0, edgecolors='gray', marker='o', alpha=.5)
+#     ax.annotate(node_labels[div[0]], (i + .005, div[1] + .005), fontsize=20)
 # ax.get_xaxis().set_visible(False)
 # plt.ylabel(r'{\bf sfd} (\%)')
 # plt.savefig(f'./results/newConnectome/divergence/scplot{beta_factor}xbc.pdf', dpi=300, bbox_inches='tight')
 # plt.show()
+print(1.01 * bc)
 
 
 ################### OTHER MEASURES : Volume  ################
@@ -624,13 +625,16 @@ name = 'all'
 # fname = f'./results/data/kms_connectivity/{name}_kms_connectivity_{b_factor}xbeta_c_{NITER}-iters.csv'
 # generate_kms_connectivity(G, b_factor, sources, targets, s_name=name, t_name='', n_iter=NITER, fname=fname)
 
-
-######## ENTROPY ############
-# name = 'ExtendedThermotaxis'
+# G = configuration_model_from_directed_multigraph(G)
+# ######## ENTROPY ############
+# name = 'AmphidSensila'
 # V = CIRCUITS[name]
-# # name ='RID'
-# # V = ['RID']
-# b_factor = 1.07
+# # # name ='RID'
+# # # V = ['RID']
+# # b_factor = 1.07
+# plot_nep_entropy(G, V, bmin, bs, num=10, base=2, with_feedback=False, node_colors=NEURONCOLORS, node_labels=node_labels)
+# plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='12', loc='upper left')
+# plt.show()
 
 # # rank = NEP_entropy_ranking(G, b_factor * bc, V, with_feedback=False)
 
@@ -1044,3 +1048,130 @@ name = 'all'
 
 # with open(sts_json, "w") as outfile: 
 #     json.dump(sts, outfile)
+
+
+
+
+##### PHASE TRANSITIONS ####
+# random.seed(64746987)
+# plot_phase_transitions(G, [('AFDL', 'AFDR'),('ALML', 'ALMR'), ('ASEL', 'ASER'), ('AWCL', 'AWCR'), ('AVAL', 'AVAR'), ('AVBL', 'AVBR'), ('AVDL', 'AVDR'), ('AVEL', 'AVER'), ('PLML', 'PLMR'), ('AVM', 'PVM'), ('PVCL', 'PVCR'),  ('RIML', 'RIMR')], bmin, bs, num=100, font_size=30, figsize=(10,8))
+# # plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='8', loc='upper left')
+# legend = plt.legend(fontsize='12')
+# # plt.savefig(f'./results/kms/phase-transition.pdf', dpi=300, bbox_inches='tight')
+
+# plt.show()
+
+
+###### AVERAGE KMS ENTROPY #####
+# kin_dist = []
+# kout_dist = []
+# k_dist = []
+# uniform_dist = []
+# N = len(neurons)
+# k_total = len(G.edges)
+# for i, neur in enumerate(neurons):
+#     kin = G.in_degree(neur)
+#     kout = G.out_degree(neur)
+#     k = kin + kout 
+#     kin_dist += [ kin / float(k_total), ]
+#     kout_dist += [ kout / float(k_total), ]
+#     k_dist += [k / float(k_total), ]
+#     uniform_dist += [1./ N, ]
+# random.seed(64789)
+# name = 'DD'
+# V = CIRCUITS[name]
+# plot_nep_entropy(G, V, bmin, bs, num=40, with_feedback=True,node_colors=NEURONCOLORS, node_labels=node_labels, font_size=30, ylabel=r'$\mathcal{S}(\mathbf{x}^{j|\beta})$', figsize=(10,6))
+# name = 'circuit_avg_conprof'
+# name = 'all_weighted_conprof'
+# # plot_avg_nep_entropy(G, [CIRCUITS['ChemoReceptors'], CIRCUITS['CiliatedMRNs'], CIRCUITS['TouchReceptors'], CIRCUITS['CommandInterneurons'], CIRCUITS['LocomotionCoordination']], [None, None, None, None, None], bmin, bs, num=100, labels=['Chemo', 'Cilia-MRNs', 'Touch', 'Command', 'Coordination'], with_feedback=True, font_size=50, figsize=(10,10))
+# G = configuration_model_from_directed_multigraph(G)
+# plot_avg_nep_entropy(G, [neurons, neurons, neurons, neurons], [uniform_dist, kin_dist, kout_dist, k_dist], bmin, bs, num=100, labels=[r'$\mathbf{p}$ = Uniform dist',r'$\mathbf{p}$ = In-deg dist', r'$\mathbf{p}$ = Out-deg dist', r'$\mathbf{p}$ = deg dist'], with_feedback=True, font_size=50, ylabel=r'$\mathcal{S}(\mathbf{x}^{\bullet|\beta}, \mathbf{p})$', colors=['tab:orange', 'm', 'dodgerblue', 'tab:green'], figsize=(10,10))
+# legend = plt.legend(fontsize='18')
+# # # plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='12', loc='upper left')
+# # # # # # legend.set_title(r'$\mathbf{p}$')
+# plt.savefig(f'./results/kms/{name}_feedback.pdf', dpi=300, bbox_inches='tight')
+# plt.show()
+# print(3.5 * bc)
+
+
+####### WEIGHTED AVERAGE KMS ENTROPY
+
+
+############ KMS states networks
+# bfactors = [3.15, 2.9, 2.5, 1.6, 1.05, 1.001]
+# b_factor = 3.15
+# name = 'TouchReceptors'
+# V = CIRCUITS[name]
+# k = len(V)
+# P = [1./k] * k
+# touch_recep = group_kms_emittance_connectivity(G, b_factor * bc, V, P, tol=1e-3)
+
+# ## Form the emittance network
+# s = 'Touch'
+# C = nx.DiGraph()
+# C.add_node(s)
+# C.add_weighted_edges_from([(s, k, float(touch_recep[k])) for k in touch_recep])
+
+# # # ### Generate coordinates ######## 
+# edges = G.edges 
+# V_targets = [w[1] for w in edges if w[0] in V]
+
+# # connect = [e for _, e in enumerate(kms_weighted_connections) if e[0] == s]
+# # connect_unwrap = []
+# C_edges = list(C.edges)
+# # for e in C_edges:
+# #     for v in V:
+# #         connect_unwrap += [(v, e[1]),]
+
+# struc = [e[1] for e in C_edges if e[1] in V_targets]
+# func = [e[1] for e in C_edges if e[1] not in V_targets]
+
+
+
+
+# k1 = len(struc) + 3
+# k2 = len(func) + 1
+# r1 = 20.
+# r2 = 30.  
+
+# con_list = [(k1, struc, r1), (k2, func, r2)]
+
+# node_coords = [(s, 0.0, 0.0)]
+
+# for (k, con, radius) in con_list:
+#     angle = radius * (np.pi / float(k)) 
+#     con_coord = []
+#     for i, node in enumerate(con, start=1):
+#         x = radius * np.cos(i * angle)
+#         y = radius  * np.sin(i * angle)
+#         con_coord.append((node, x, y))
+#     node_coords += con_coord
+
+
+# pos = {str(co[0]): (float(co[1]), float(co[2])) for co in node_coords}
+# # if NOI in struc:
+# #     pos.update({NOI: (r1, 0.0)})
+
+
+
+# # # # print([e for e in kms_weighted_connections if e[0] == 'AFDR'])
+# node_shape = {n: 'round' for n in C.nodes}
+# # for n in [v for v in list(K.nodes) if (str(v) != s)]:
+# #     if  (s, n) in G.edges:
+# #         node_shape[n] = 'polygon'
+# #     else:
+# #         node_shape[n] = 'polygon'
+# #     node_shape.copy()
+# node_shape[s] = 'polygon'
+
+# ncolors = {n: node_colors[n] for n in C.nodes if n in neurons} | {s: '#e9beed'}
+# nlabels = {s: f'Touch\nReceptors'}
+# nsizes = {n: 1.6 for n in C.nodes if n in neurons} | {s: 22.4}
+
+# draw_weighted_digraph(C, pos=pos, node_shape=node_shape, node_size=nsizes, node_colors=ncolors, node_labels=nlabels, arrow_shrinkA=110., arrow_shrinkB=12., edgecolor=func_edge_color, font_size=40, figsize=(10,10), font_kws = dict(ha='center', va='center', fontweight='normal', fontstretch='normal'))
+# plt.show()
+# # plt.savefig(f'./results/kms/{s}_emittance_{b_factor}xbc.pdf', dpi=300, bbox_inches='tight')
+
+# print(len(struc), len(func), 3.15*bc)
+
+

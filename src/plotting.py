@@ -355,7 +355,7 @@ def plot_node_kms_connectivity(graph, node, beta, tol=TOL, node_labels=None, nod
     # plt.show()
 
 
-def plot_neural_emittance_profile_entropy(graph, nodelist, beta_min, beta_max, num=50, with_feedback=True , node_colors=None, node_labels=None, font_size=12, figsize=(10,6)):
+def plot_nep_entropy(graph, nodelist, beta_min, beta_max, num=50, base=None, with_feedback=True , node_colors=None, node_labels=None, font_size=12, ylabel=None, figsize=(10,6)):
     '''Plot the variation of the entropy of each node KMS emittance in nodelist.'''
 
     plt.rcParams.update({
@@ -375,6 +375,9 @@ def plot_neural_emittance_profile_entropy(graph, nodelist, beta_min, beta_max, n
 
     xs = KMS['range']
     nodes = list(graph.nodes)
+    N = len(nodes)
+    if with_feedback == False:
+        N = N - 1.
     
     colorlist = get_colors(len(nodes), pastel_factor=.5)
 
@@ -393,7 +396,7 @@ def plot_neural_emittance_profile_entropy(graph, nodelist, beta_min, beta_max, n
     
     for _, u in enumerate(nodelist):
         profiles = KMS[u]
-        ys = [entropy(profile) for _, profile in enumerate(profiles)]
+        ys = [entropy(profile, base=base) for _, profile in enumerate(profiles)]
         # u_struc = SS[u]
         label = u
         color = color_dict[u]
@@ -412,8 +415,10 @@ def plot_neural_emittance_profile_entropy(graph, nodelist, beta_min, beta_max, n
         #         plt.scatter(xs[step], entropy(u_prof), color=color)
 
     xlabel = r'Temperature $1/\beta$' 
+    if ylabel == None:
+        ylabel = 'NEP entropy'
     plt.xlabel(xlabel)
-    plt.ylabel('NEP entropy')
+    plt.ylabel(ylabel)
     # plt.legend()
 
 def plot_node_kms_emittance_profile_diversity(graph, nodelist, beta_min, beta_max, num=50, node_labels=None, font_size=12):
@@ -619,6 +624,112 @@ def plot_avg_total_receptance(graph, beta_min, beta_max, num=100, font_size=12, 
     xlabel = r'Temperature $1/\beta$'
     plt.xlabel(xlabel)
     plt.ylabel('Mean total receptance')
+
+
+def plot_phase_transitions(graph, pairs, beta_min, beta_max, num=100, linestyle=None, colors=None, font_size=12, figsize=(10,6)):
+    '''Plot phase transitions of KMS states corresponding to 
+    each pair of nodes.
+    
+    This is defined as the fidelity of the pair of KMS states.
+    '''
+    plt.rcParams.update({
+        "figure.autolayout": True,
+        "text.usetex": True,
+        "font.family": "Helvetica",
+        "font.size": font_size,
+        "figure.figsize": figsize,
+    })
+
+    interval = temperature_range(beta_min, beta_max, num=num)
+    # colorlist = get_colors(len(pairs), pastel_factor=.5)
+
+    if linestyle == None:
+        linestyle = ['-'] * len(pairs)
+
+    if colors == None:
+        colors = get_colors(len(pairs), pastel_factor=.5)
+
+    transitions = {pair: [] for _,pair in enumerate(pairs)}
+
+    for _, T in enumerate(interval):
+        beta = 1./T 
+        nodes, Z = kms_emittance(graph, beta, with_feedback=True)
+
+        for p, pair in enumerate(pairs):
+            j1 = nodes.index(pair[0])
+            j2 = nodes.index(pair[1])
+            Z1 = Z[:,j1]
+            Z2 = Z[:,j2]
+            transitions[pair] += [fidelity(Z1,Z2),]
+            transitions.copy()
+    
+    for i, npair in enumerate(pairs):
+        ys = transitions[npair]
+        color = colors[i]
+        plt.plot(interval, ys, linestyle[i], label=f'{npair[0]}--{npair[1]}', color=color)
+    
+    xlabel = r'Temperature $1/\beta$'
+    plt.xlabel(xlabel)
+    plt.ylabel('Transition probability')
+
+
+def plot_avg_nep_entropy(graph, nodelists, dists, beta_min, beta_max, num=50, base=None, labels=None, colors=None,  with_feedback=True, font_size=12, ylabel=None, figsize=(10,6)):
+    '''Plot the entropy variation of the average KMS states of each nodelist in `nodelists`.
+
+    Parameters
+    ----------
+    nodelists : array of arrays
+        List of lists of nodes
+    dists : array of arrays
+        List of lists of floats representing the distributions to be used for each nodelist.
+    labels : array
+        List of the labels coresponding to each list
+    
+    
+    '''
+
+    plt.rcParams.update({
+        "figure.autolayout": True,
+        "text.usetex": True,
+        "font.family": "Helvetica",
+        "font.size": font_size,
+        "figure.figsize": figsize,
+    })
+    nodes = list(graph.nodes)
+
+    KMS = node_kms_emittance_profile_variation(graph, nodes, beta_min, beta_max, num=num, with_feedback=with_feedback)
+
+    xs = KMS['range']
+    
+    N = len(nodes)
+    if with_feedback == False:
+        N = N - 1.
+    
+    if colors == None:
+        colors = get_colors(len(nodes), pastel_factor=.5)
+
+    for i, nodelist in enumerate(nodelists):
+        n = len(nodelist)
+        kms = [KMS[u] for u in nodelist]
+        if dists[i] == None:
+            avg_profiles = [sum(x) / float(n) for x in zip(* kms)]
+        else:
+            dist = dists[i]
+            avg_profiles = [sum([x[k] * dist[k] for k in range(n)]) for x in zip(* kms)]
+
+
+        ys = [entropy(z, base=base) for _,z in enumerate(avg_profiles)]
+        plt.plot(xs, ys,'-', label=labels[i], color=colors[i], linewidth=2.5)
+
+    xlabel = r'Temperature $1/\beta$'
+    if ylabel == None:
+        ylabel = r'$\mathcal{S}(\langle C\rangle,\beta)$'
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    
+        
+
+
 
 
         

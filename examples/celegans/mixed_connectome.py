@@ -185,19 +185,21 @@ bs = 2.5 * bc # = 10.739392506747246
 # KMS subgraphs
 # b_factors = [.9, .98, 1.001, 1.01, 1.06, 1.1, 1.2, 1.5, 1.8, 1.9, 2., 2.1, 2.4, 2.6, 2.8, 3., 3.1, 3.2, 3.5, 3.8, 4.] 
 # # b_factors = [1.1]
-# b_factor = 1.06
-# name = 'ExtendedThermotaxis'
+# factors = [3.5, 3.1, 2.9, 2.5, 1.5, 1.07, 1.01, 1.0001]
+# b_factor = 1.0001
+# name = 'ThermoMotor'
 # V = CIRCUITS[name]
-# # for b_factor in b_factors:
-# #     b = b_factor * beta_c
-# #     # V = olfactory_thermo_neurons
-# K = kms_weighted_subgraph(G, b_factor * bc, nodelist=V)
+# # # # for b_factor in b_factors:
+# # # #     b = b_factor * beta_c
+# # # #     # V = olfactory_thermo_neurons
+# K = kms_weighted_subgraph(G, b_factor * bc, nodelist=V, with_feedback=False, tol=1e-4)
 
-# # # # print(list(K.edges(data=True))[0][2]['weight'])
-# draw_weighted_digraph(K, pos={n: POSITIONS['thermotaxis'][n] for n in K.nodes}, node_size=1.6, node_colors={n: node_colors[n] for n in K.nodes}, node_labels={n: node_labels[n] for n in K.nodes}, edgecolor=blue_sky, font_size=8, figsize=(10,6))
-# #     plt.savefig(f'./results/nets/kms_graphs/func_circuits/{name}_KMS-subgraph-{b_factor}xbeta_c.pdf', dpi=300, bbox_inches='tight')
+# # # # # # print(list(K.edges(data=True))[0][2]['weight'])
+# draw_weighted_digraph(K, pos={n: neuron_positions[n] for n in K.nodes}, node_size=1.6, node_colors={n: node_colors[n] for n in K.nodes}, node_labels=None, arrowstyle='simple', arrow_shrink=21., edgecolor=blue_sky, font_size=30, edge_factor=4, e_alpha=.9, figsize=(6,8), font_kws = dict(ha='center', va='center', fontweight='normal', fontstretch='normal'))
+# plt.savefig(f'./results/nets/kms_graphs/func_circuits/{name}_KMS-subgraph-{b_factor}xbeta_c.pdf', dpi=300, bbox_inches='tight')
 # #     plt.close()
 # plt.show()
+# print(1.01 * bc, bc)
 
 
 
@@ -737,6 +739,19 @@ bs = 2.5 * bc # = 10.739392506747246
 # plt.text(-16.5, -13.3,'Motor', fontsize=12, zorder=10, **font_kws)
 # # plt.show()
 # plt.savefig(f'./results/newConnectome/multigraph.jpeg', dpi=300, bbox_inches='tight')
+
+
+##### PHASE TRANSITIONS ####
+# plot_phase_transitions(G, [('AVAL', 'AVAR'), ('RIAL', 'RIAR'), ('AFDL', 'AFDR'), ('AWCL', 'AWCR'), ('AVAL', 'RIAL'), ('AFDL', 'AWCL'), ('PVCL', 'PVCR'), ('PVDL', 'PVDR'), ('AIAL', 'AIAR')], bmin, bs, num=50)
+# plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='8', loc='upper left')
+# plt.show()
+
+
+###### AVERAGE KMS ENTROPY #####
+# plot_avg_nep_entropy(G, [sensoryNeurons, interNeurons], bmin, bs, num=40, labels=['Sensory', 'Inter'])
+# plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='8', loc='upper left')
+# plt.show()
+
 
 
 

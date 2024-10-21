@@ -30,12 +30,13 @@ def beta_kms_digraph(graph, beta, entropy_ratio=.3, w_ratio=.2):
     return entropy_thresh, w_thresh, G
 
 
-def kms_subgraph_adj_mat(graph, beta, nodelist=None):
+def kms_subgraph_adj_mat(graph, beta, nodelist=None, with_feedback=False):
     '''Returns the sub-matrix corresponding to the KMS emittance profile of the subnetwork
     defined by the given nodelist.'''
-    nodes, Z = kms_emittance(graph, beta)
+    nodes, Z = kms_emittance(graph, beta, with_feedback=with_feedback)
     if nodelist == None:
         nodelist = nodes
+    
     N = len(nodelist)
     W = np.zeros((N, N))
 
@@ -46,16 +47,16 @@ def kms_subgraph_adj_mat(graph, beta, nodelist=None):
             W[i][j] = Z[ii][jj]
 
     # Normalize the columns of W
-    for j in range(N):
-        col = W[:, j]
-        W[:, j] = remove_ith(col, j)
+    # for j in range(N):
+    #     col = W[:, j]
+    #     W[:, j] = remove_ith(col, j)
 
     return nodelist, W
 
 
-def kms_weighted_subgraph(graph, beta, nodelist=None):
+def kms_weighted_subgraph(graph, beta, nodelist=None, with_feedback=False, tol=0.):
     '''Returns the weighted directed subgraph obtained from the kms_subgraph_adj_mat.'''
-    nodes, W = kms_subgraph_adj_mat(graph, beta, nodelist=nodelist)
+    nodes, W = kms_subgraph_adj_mat(graph, beta, nodelist=nodelist, with_feedback=with_feedback)
 
     K = nx.DiGraph()
     K.add_nodes_from(nodes)
@@ -65,7 +66,7 @@ def kms_weighted_subgraph(graph, beta, nodelist=None):
     for i, target in enumerate(nodes):
         for j, source in enumerate(nodes):
             w = W[i][j]
-            if w > 0.:
+            if w > tol:
             # if (i != j) and  (w > 0.):
                 E += [(source, target, w),]
                 # K.add_edge(source, target, weight=w)
@@ -124,7 +125,7 @@ def group_kms_emittance_connectivity(graph, beta, nodelist, P, tol=TOL):
 
     for j, u in enumerate(nodes):
         w = vec[j]
-        if  w > 0.:
+        if  w > tol:
             # E += [(node, u, w),]
             C[u] = w
             C.copy()

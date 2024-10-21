@@ -77,7 +77,7 @@ def emittance_vector(graph, beta):
 
 
 
-def kms_emittance(graph, beta):
+def kms_emittance(graph, beta, with_feedback=True):
     '''Returns the KMS emittance matrix of the directed multigraph at inverse temperature beta.'''
     nodes = list(graph.nodes)
     N = len(nodes)
@@ -94,6 +94,11 @@ def kms_emittance(graph, beta):
         Zv = [get_true_val(x, tol=TOL) for _, x in enumerate(Zv)]
         s = nonzero_sum(Zv)
         Z[:, j] = [x / s for _, x in enumerate(Zv)]
+
+    if with_feedback == False:
+        for j in range(N):
+            col = Z[:, j]
+            Z[:, j] = remove_ith(col, j)
     
     return nodes, Z
 
@@ -127,12 +132,10 @@ def node_kms_emittance_profile_variation(graph,  nodelist, beta_min, beta_max, n
     
     for _, T in enumerate(interval):
         beta = 1./T
-        nodes, Z = kms_emittance(graph, beta)
+        nodes, Z = kms_emittance(graph, beta, with_feedback=with_feedback)
         for u in nodelist:
             i = nodes.index(u)
             profile = Z[:, i]
-            if with_feedback == False:
-                profile = remove_ith(profile, i)
             KMSProfiles[u] += [profile,]
             KMSProfiles.copy()
 

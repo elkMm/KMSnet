@@ -311,6 +311,9 @@ CIRCUITS = {
     'Chemotaxis': chemotaxis_neurons,
     'Olfactory': olfactory_neurons,
     'Chemorepulsion': chemorepulsion_neurons,
+    'TouchReceptors': ['ALML', 'ALMR', 'AVM', 'PLML', 'PLMR', 'PVM'],
+    'CiliatedMRNs': ['ASHL', 'ASHR', 'CEPDL', 'CEPDR', 'CEPVL', 'CEPVR', 'ADEL', 'ADER', 'FLPL', 'FLPR', 'OLQDL', 'OLQDR', 'OLQVL', 'OLQVR', 'PDEL', 'PDER'],
+    'ChemoReceptors': ['ADFL', 'ADFR', 'ADLL', 'ADLR', 'ASEL', 'ASER', 'ASGL', 'ASGR', 'ASIL', 'ASIR', 'ASJL', 'ASJR', 'ASKL', 'ASKR', 'AWAL', 'AWAR', 'AWBL', 'AWBR', 'AWCL', 'AWCR', 'PHAL', 'PHAR', 'PHBL', 'PHBR', 'AQR', 'PQR', 'URXL', 'URXR'],
     'TouchInducedMovement': touch_sensitive_neurons,
     'ReducedChemosensory': reduced_chemosensory,
     'AmphidSensila': amphid_sensila,
@@ -335,7 +338,8 @@ CIRCUITS = {
     'ASE': ['ASEL', 'ASER'],
     'BackwardLocomotion': VA_neurons + DA_neurons + AS_neurons + ['AVAL', 'AVAR', 'AVDL', 'AVDR', 'AVEL', 'AVER'] + ['LUAL', 'LUAR', 'ALML', 'ALMR'],
     'ForwardLocomotion': VB_neurons + DB_neurons + ['AVBL', 'AVBR','PVCL', 'PVCR'] + ['PLML', 'PLMR'],
-    'LocomotionCoordination': VD_neurons + DD_neurons
+    'LocomotionCoordination': VD_neurons + DD_neurons,
+    'ThermoMotor': thermotaxis_neurons + ['RIBL', 'RIBR', 'RIML', 'RIMR']
 }
 
 
