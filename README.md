@@ -25,7 +25,7 @@ The interaction profile of a node $j$ at inverse temperature $\beta > \beta_c$ i
 ## KMS matrices
 To get the KMS matrix whose columns are the interaction profiles $x^{j|\beta}$, use the function 
 
-* `states.KMS_matrix(G, beta, with_feedback=True)`. (or `with_feedback=False` if you want to remove trivial loops and self-interactions, which basically removes the diagonal entries and then renormalizes the columns).
+* `states.kms_matrix(G, beta, with_feedback=True)`. (or `with_feedback=False` if you want to remove trivial loops and self-interactions, which basically removes the diagonal entries and then renormalizes the columns).
 
 
 
