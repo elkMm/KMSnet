@@ -1,5 +1,5 @@
 # KMSnet
-This repository containes the code for Kubo-Martin-Schwinger (KMS) states on the $C^*$-algebra of a directed network originally developped for the paper (submitted)
+This repository containes the code for Kubo-Martin-Schwinger (KMS) states on the $C^*$-algebra of a directed network originally developped for the papers
 
 E. Moutuou and H. Benali - *KMS states of Information Flow in Directed Brain Synaptic Networks*, 2024, arXiv:2410.18222
 
