@@ -3,7 +3,7 @@ from itertools import combinations
 import numpy as np
 from distinctipy import get_colors
 from src.utils import *
-from src.states import kms_emittance, node_structural_connectivity
+from src.states import kms_matrix, node_structural_connectivity
 from src.generators import random_sample_from_deg_seq
 
 
@@ -25,7 +25,7 @@ def feedback_coef(graph, nodelist, beta_min, beta_max, num=50):
     
     for _, T in enumerate(interval):
         beta = 1./T 
-        nodes, Z = kms_emittance(graph, beta)
+        nodes, Z = kms_matrix(graph, beta)
         for u in nodelist:
             i = nodes.index(u)
             recep_profile = Z[i, :]
@@ -42,7 +42,7 @@ def feedback_coef_ranking(graph, beta, nodelist=None):
         nodelist = sorted(list(graph.nodes))
     
     coefs = {}
-    nodes, Z = kms_emittance(graph, beta)
+    nodes, Z = kms_matrix(graph, beta)
     for u in nodelist:
         i = nodes.index(u)
         recep_profile = Z[i, :]
@@ -65,7 +65,7 @@ def NIC_ranking(graph, beta, nodelist=None):
     if nodelist == None:
         nodelist = list(graph.nodes)
 
-    nodes, Z = kms_emittance(graph, beta)
+    nodes, Z = kms_matrix(graph, beta)
     coefs = {}
 
     for u in nodelist:
@@ -92,7 +92,7 @@ def IC_variation(graph, nodelist, beta_min, beta_max, num=50):
     
     for _, T in enumerate(interval):
         beta = 1./T 
-        nodes, Z = kms_emittance(graph, beta)
+        nodes, Z = kms_matrix(graph, beta)
         for u in nodelist:
             i = nodes.index(u)
             Z[i, :][i] = 0.
@@ -108,7 +108,7 @@ def beta_kms_emittance_ranking(graph, beta, nodelist=None):
     if nodelist == None:
         nodelist = list(graph.nodes)
 
-    nodes, Z = kms_emittance(graph, beta)
+    nodes, Z = kms_matrix(graph, beta)
     weights = {}
     for u in nodelist:
         i = nodes.index(u)
@@ -127,7 +127,7 @@ def kms_receptance_ranking(graph, beta, nodelist=None, averaging=False, with_fee
     if nodelist == None:
         nodelist = list(graph.nodes)
 
-    nodes, Z = kms_emittance(graph, beta)
+    nodes, Z = kms_matrix(graph, beta)
     N = len(nodes)
     weights = {}
     for u in nodelist:
@@ -153,7 +153,7 @@ def IC_ranking(graph, beta, nodelist=None):
     if nodelist == None:
         nodelist = list(graph.nodes)
 
-    nodes, Z = kms_emittance(graph, beta)
+    nodes, Z = kms_matrix(graph, beta)
     N = len(nodes)
     ICs = {}
     for u in nodelist:
@@ -175,7 +175,7 @@ def NEP_entropy_ranking(graph, beta, nodelist=None, with_feedback=True):
     if nodelist == None:
         nodelist = list(graph.nodes)
 
-    nodes, Z = kms_emittance(graph, beta)
+    nodes, Z = kms_matrix(graph, beta)
     weights = {}
     for u in nodelist:
         i = nodes.index(u)
@@ -199,7 +199,7 @@ def node_to_node_kms_flow_stream(graph, node, nodelist, beta_min, beta_max, num=
 
     for _, T in enumerate(interval):
         beta = 1./T 
-        nodes, Z = kms_emittance(graph, beta)
+        nodes, Z = kms_matrix(graph, beta)
         i = nodes.index(node)
         Zv = remove_ith(Z[:, i], i)
         for u in nodelist:
@@ -216,7 +216,7 @@ def structure_function_divergence(graph, nodelist, beta):
     '''
 
     vertices, SS = node_structural_connectivity(graph)
-    nodes, Z = kms_emittance(graph, beta)
+    nodes, Z = kms_matrix(graph, beta)
     DIV = []
     for v in nodelist:
         v_ind = vertices.index(v)
@@ -236,7 +236,7 @@ def kms_connectivity_significance(graph, sources, targets, beta, n_iter=100):
     '''Calculate statistical significance of connections between nodes in sources and nodes in targets given by KMS states
     for each node in the nodelist. 
 
-    The statistical significance is given by the p-value considering n_iter generated r
+    The statistical significance is given by the p-value considering n_iter generated 
     random directed multigraphs and computing the KMS states for each of them.
 
     Parameters
@@ -247,10 +247,10 @@ def kms_connectivity_significance(graph, sources, targets, beta, n_iter=100):
     beta : float
     n_iter : int, default : 100
     '''
-    nodes, Z = kms_emittance(graph, beta)
+    nodes, Z = kms_matrix(graph, beta)
     rand_sample = random_sample_from_deg_seq(graph, n_iter=n_iter)
 
-    rand_sample_kms = {k: kms_emittance(rand_sample[k], beta)[1] for k in rand_sample}
+    rand_sample_kms = {k: kms_matrix(rand_sample[k], beta)[1] for k in rand_sample}
     
     conn_sig = {n: [] for n in sources}
 

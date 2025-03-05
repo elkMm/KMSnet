@@ -538,7 +538,7 @@ V = sorted(list(G.nodes))
 # plt.ylabel(r'{\bf sfd} (\%)')
 # plt.savefig(f'./results/newConnectome/divergence/scplot{beta_factor}xbc.pdf', dpi=300, bbox_inches='tight')
 # plt.show()
-print(1.01 * bc)
+# print(1.01 * bc)
 
 
 ################### OTHER MEASURES : Volume  ################
@@ -1173,6 +1173,7 @@ print(1.01 * bc)
 # # plt.savefig(f'./results/kms/{s}_emittance_{b_factor}xbc.pdf', dpi=300, bbox_inches='tight')
 
 # print(len(struc), len(func), 3.15*bc)
+# beta_factor = 1.02
 
-
-print(1.05 * bc)
+# plot_node_kms_connectivity(G, 'AFDR', beta_factor*bc,node_labels=node_labels, node_colors=node_colors)
+# plt.show()

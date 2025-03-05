@@ -9,16 +9,12 @@ from collections import defaultdict
 from distinctipy import get_colors
 from .utils import is_qual, out_deg_ratio_matrix, fidelity, nonzero_sum, remove_ith, js_divergence
 from .states import (
-    emittance_matrix,
-    kms_emittance,
+    kms_matrix,
     node_emittance_variation,
     node_kms_emittance_profile_variation,
     node_kms_receptance_profile_variation,
-    node_kms_emittance_profile_entropy_range,
     node_kms_emittance_profile_diversity_range,
-    KMS_emittance_dist_entropy_variation,
-    node_structural_connectivity,
-    node_structural_entropy, 
+    node_structural_connectivity
 )
 from .measures import *
 from .kms_graphs import node_kms_emittance_connectivity
@@ -288,7 +284,7 @@ def plot_sfd(graph, nodelist, beta_min, beta_max, num=50, node_colors=None, node
 
     for _, T in enumerate(xs):
         beta = 1./T
-        verts, Z = kms_emittance(graph, beta)
+        verts, Z = kms_matrix(graph, beta)
         for v in nodelist:
             v_ind = nodes.index(v)
             k = verts.index(v)
@@ -585,7 +581,7 @@ def plot_kms_simplex_volume(graph, beta_min, beta_max, num=100, font_size=12):
 
     for _, T in enumerate(interval):
         beta = 1./T 
-        Z = kms_emittance(graph, beta)[1]
+        Z = kms_matrix(graph, beta)[1]
         V_Z = linalg.det(Z)
         ys += [V_Z,]
 
@@ -612,7 +608,7 @@ def plot_avg_total_receptance(graph, beta_min, beta_max, num=100, font_size=12, 
 
     for _, T in enumerate(xs):
         beta = 1./T 
-        nodes, Z = kms_emittance(graph, beta)
+        nodes, Z = kms_matrix(graph, beta)
         y = 0.
         for i, _ in enumerate(nodes):
             Y = Z[i, :]
@@ -653,7 +649,7 @@ def plot_phase_transitions(graph, pairs, beta_min, beta_max, num=100, linestyle=
 
     for _, T in enumerate(interval):
         beta = 1./T 
-        nodes, Z = kms_emittance(graph, beta, with_feedback=True)
+        nodes, Z = kms_matrix(graph, beta, with_feedback=True)
 
         for p, pair in enumerate(pairs):
             j1 = nodes.index(pair[0])

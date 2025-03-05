@@ -12,7 +12,7 @@ def beta_kms_digraph(graph, beta, entropy_ratio=.3, w_ratio=.2):
     This is a the weighted digraph whose adjacency matrix is the (thresholded)
     beta-KMS emittance matrix.'''
 
-    nodes, KMS = kms_emittance(graph, beta)
+    nodes, KMS = kms_matrix(graph, beta)
 
     # thresholding the KMS emittance matrix
     entropy_thresh, w_thresh, A = column_stochastic_matrix_thresholded(KMS, entropy_ratio=entropy_ratio, weight_ratio=w_ratio)
@@ -33,7 +33,7 @@ def beta_kms_digraph(graph, beta, entropy_ratio=.3, w_ratio=.2):
 def kms_subgraph_adj_mat(graph, beta, nodelist=None, with_feedback=False):
     '''Returns the sub-matrix corresponding to the KMS emittance profile of the subnetwork
     defined by the given nodelist.'''
-    nodes, Z = kms_emittance(graph, beta, with_feedback=with_feedback)
+    nodes, Z = kms_matrix(graph, beta, with_feedback=with_feedback)
     if nodelist == None:
         nodelist = nodes
     
@@ -76,16 +76,16 @@ def kms_weighted_subgraph(graph, beta, nodelist=None, with_feedback=False, tol=0
 
 def node_kms_emittance_connectivity(graph, node, beta, tol=TOL):
     '''Returns the weighted directed subgraph obtained from the beta-KMS state defined by the specified node.'''
-    nodes, Z = kms_emittance(graph, beta)
+    nodes, Z = kms_matrix(graph, beta)
     i = nodes.index(node)
     Zv = remove_ith(Z[:, i], i)
 
     # # transform the range into [0,1]
-    a = float(min(Zv))
-    b = float(max(Zv))
-    d = 1./(b - a)
-    con = [(x - a) * d for _, x in enumerate(Zv)]
-    con = [get_true_val(x, tol=tol) for _, x in enumerate(con)]
+    # a = float(min(Zv))
+    # b = float(max(Zv))
+    # d = 1./(b - a)
+    # con = [(x - a) * d for _, x in enumerate(Zv)]
+    con = [get_true_val(x, tol=tol) for _, x in enumerate(Zv)]
 
     # K = nx.DiGraph()
     # E = []
@@ -105,7 +105,7 @@ def node_kms_emittance_connectivity(graph, node, beta, tol=TOL):
 
 
 def group_kms_emittance_connectivity(graph, beta, nodelist, P, tol=TOL):
-    nodes, Z = kms_emittance(graph, beta)
+    nodes, Z = kms_matrix(graph, beta)
     C = {}
     vec = np.zeros(len(nodes))
     for ind, node in enumerate(nodelist):

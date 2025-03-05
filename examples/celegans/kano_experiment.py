@@ -104,42 +104,42 @@ target_categories = {
     'SMD': ['SMD']
 }
 
-cat_name = 'AIY'
+# cat_name = 'AIY'
     
-targeted_neurons = target_categories[cat_name]
-YS = {n: [] for n in targeted_neurons}
+# targeted_neurons = target_categories[cat_name]
+# YS = {n: [] for n in targeted_neurons}
 
-b_factor = 1.06
+# b_factor = 1.06
 
-emitters='AIY'
+# emitters='AIY'
 
-beta_fmin = 1.01 * beta_c
-beta_fmax = 1.1 * beta_c
-theoret_temp = list(np.linspace(1/ beta_fmax, 1 / beta_fmin, num=90))
+# beta_fmin = 1.01 * beta_c
+# beta_fmax = 1.1 * beta_c
+# theoret_temp = list(np.linspace(1/ beta_fmax, 1 / beta_fmin, num=90))
 
-randP = list(np.random.rand(90, 3))
-dists = AFD_AWC_calc_dist
-# randP = np.random.normal(0, .1, size=(90, 3))
-for k, t in enumerate(theoret_temp):
-# for _, d in enumerate(dists):
-    b = 1 / t
-    P = dists[k]
-    Con = group_kms_emittance_connectivity(C, b, ['AWC'], [P[1]])
-    for n in targeted_neurons:
-        recep = 0
-        if n in Con:
-            recep = Con[n]
-        YS[n] += [recep,]
-        YS.copy()
+# randP = list(np.random.rand(90, 3))
+# dists = AFD_AWC_calc_dist
+# # randP = np.random.normal(0, .1, size=(90, 3))
+# for k, t in enumerate(theoret_temp):
+# # for _, d in enumerate(dists):
+#     b = 1 / t
+#     P = dists[k]
+#     Con = group_kms_emittance_connectivity(C, b, ['AWC'], [P[1]])
+#     for n in targeted_neurons:
+#         recep = 0
+#         if n in Con:
+#             recep = Con[n]
+#         YS[n] += [recep,]
+#         YS.copy()
 
-for tn in targeted_neurons:
-    tn_color = COLORS[neuron_cls.index(tn)]
-    plt.plot(theoret_temp, YS[tn], label=tn, color=tn_color)
-plt.xlabel(f'Physical Temperature')
-plt.ylabel(f'KMS receptance from {emitters}')
-plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='7', loc='upper left')
-# plt.savefig(f'./results/kano/receptance/{cat_name}_ReceptanceFromAFD-AWC_{b_factor}xbeta_c.pdf', dpi=300, bbox_inches='tight')
-plt.show()
+# for tn in targeted_neurons:
+#     tn_color = COLORS[neuron_cls.index(tn)]
+#     plt.plot(theoret_temp, YS[tn], label=tn, color=tn_color)
+# plt.xlabel(f'Physical Temperature')
+# plt.ylabel(f'KMS receptance from {emitters}')
+# plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='7', loc='upper left')
+# # plt.savefig(f'./results/kano/receptance/{cat_name}_ReceptanceFromAFD-AWC_{b_factor}xbeta_c.pdf', dpi=300, bbox_inches='tight')
+# plt.show()
 
 
 

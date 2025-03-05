@@ -77,8 +77,8 @@ def emittance_vector(graph, beta):
 
 
 
-def kms_emittance(graph, beta, with_feedback=True):
-    '''Returns the KMS emittance matrix of the directed multigraph at inverse temperature beta.'''
+def kms_matrix(graph, beta, with_feedback=True):
+    '''Returns the KMS matrix matrix of the directed multigraph at inverse temperature beta.'''
     nodes = list(graph.nodes)
     N = len(nodes)
     B = emittance_matrix(graph, beta, nodes=nodes)
@@ -105,23 +105,22 @@ def kms_emittance(graph, beta, with_feedback=True):
 def kms_emittances_entropy(graph, beta):
     '''Returns the entropies of all the node KMS emittances.'''
 
-    nodes, X = kms_emittance(graph, beta)
+    nodes, X = kms_matrix(graph, beta)
 
     return [entropy(X[:, j]) for j in range(len(nodes))]
 
-def node_kms_emittance_profile(graph, node, beta):
-    '''Gibbs profile of a node.
+def get_interaction_profile(graph, node, beta):
+    '''Interaction profile of a node given by pure KMS state.
 
     Returns
     -------
     node_profile: array like
     '''
 
-    nodes, Z = kms_emittance(graph, beta)
+    nodes, Z = kms_matrix(graph, beta, with_feedback=False)
     i = nodes.index(node)
-    node_profile = Z[:, i]
-
-    return node_profile
+    profile = Z[:, i]
+    return nodes, profile
 
 def node_kms_emittance_profile_variation(graph,  nodelist, beta_min, beta_max, num=50, with_feedback=True):
     '''Return KMS emittances of nodes within a given interval.'''
@@ -132,7 +131,7 @@ def node_kms_emittance_profile_variation(graph,  nodelist, beta_min, beta_max, n
     
     for _, T in enumerate(interval):
         beta = 1./T
-        nodes, Z = kms_emittance(graph, beta, with_feedback=with_feedback)
+        nodes, Z = kms_matrix(graph, beta, with_feedback=with_feedback)
         for u in nodelist:
             i = nodes.index(u)
             profile = Z[:, i]
@@ -143,7 +142,7 @@ def node_kms_emittance_profile_variation(graph,  nodelist, beta_min, beta_max, n
 
 
 def node_kms_emittance_profile_entropy(graph, node, beta):
-    node_profile = node_kms_emittance_profile(graph, node, beta)
+    _, node_profile = get_interaction_profile(graph, node, beta)
 
     return entropy(node_profile)
 
@@ -197,7 +196,7 @@ def node_kms_emittance_profile_diversity_range(graph, nodelist, beta_min, beta_m
 def avg_node_kms_emittance(graph, beta):
     V = graph.nodes
     N = len(V)
-    Z = kms_emittance(graph, beta)[1]
+    Z = kms_matrix(graph, beta)[1]
     X_avg = np.sum(Z[:, i] for i, _ in enumerate(V)) / N
     
     return V, X_avg
@@ -218,7 +217,7 @@ def avg_node_kms_emittance_profile_variation(graph, beta_min, beta_max, num=50):
 
     for _, T in enumerate(interval):
         beta = 1./T
-        Z = kms_emittance(graph, beta)[1]
+        Z = kms_matrix(graph, beta)[1]
         X_avg = np.sum(Z[:, i] for i, _ in enumerate(V)) / N
 
         variation['avg_node_profiles'] += [X_avg,]
@@ -250,7 +249,7 @@ def node_reception_profile(graph, node, beta):
     '''Probabilities of reception of the node 
     at inverse temperature beta.'''
 
-    nodes, Z = kms_emittance(graph, beta)
+    nodes, Z = kms_matrix(graph, beta)
     i = nodes.index(node)
     reception_profile = Z[i, :] # /(1. * len(nodes))
 
@@ -265,7 +264,7 @@ def node_kms_receptance_profile_variation(graph,  nodelist, beta_min, beta_max, 
     
     for _, T in enumerate(interval):
         beta = 1./T
-        nodes, Z = kms_emittance(graph, beta)
+        nodes, Z = kms_matrix(graph, beta)
         for u in nodelist:
             i = nodes.index(u)
             profile = Z[i, :]

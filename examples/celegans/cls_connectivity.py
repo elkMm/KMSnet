@@ -278,18 +278,18 @@ beta_aiz = 1.59 * beta_c + .0004 # beta_aiz = 8.406687791303451, T = 0.118952912
 
 
 # Node to node flow streams
-name = 'Thermotaxis'
-sources = ['AFD']
-# Emit = node_kms_emittance_profile(S, )
-# targets = ['AWBL', 'AWBR', 'ADLL', 'ADLR', 'URXL', 'URXR']
-targets = CLS_CIRCUITS[name]
-plot_node_kms_stream_variation(C, sources, targets, beta_min, beta, linestyle=['-'], num=1000, colors=COLORS2, node_labels=cls_labels)
-# streams = node_to_node_kms_flow_stream(S, source, targets, beta_min, beta)
+# name = 'Thermotaxis'
+# sources = ['AFD']
+# # Emit = node_kms_emittance_profile(S, )
+# # targets = ['AWBL', 'AWBR', 'ADLL', 'ADLR', 'URXL', 'URXR']
+# targets = CLS_CIRCUITS[name]
+# plot_node_kms_stream_variation(C, sources, targets, beta_min, beta, linestyle=['-'], num=1000, colors=COLORS2, node_labels=cls_labels)
+# # streams = node_to_node_kms_flow_stream(S, source, targets, beta_min, beta)
 
-# xs = streams['range']
-# for u in targets:
-#     ys = streams[u]
-#     plt.plot(xs, ys, '--', label=f'{source}-->{u}')
-plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='10', loc='upper left')
-plt.tight_layout()
-plt.show()
+# # xs = streams['range']
+# # for u in targets:
+# #     ys = streams[u]
+# #     plt.plot(xs, ys, '--', label=f'{source}-->{u}')
+# plt.legend(bbox_to_anchor=(1.05, 1.0), fontsize='10', loc='upper left')
+# plt.tight_layout()
+# plt.show()

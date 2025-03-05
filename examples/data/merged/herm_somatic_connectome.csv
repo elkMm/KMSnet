@@ -1,5 +1,5 @@
 # Chemical synapses and Gap junctions in the C. elegans
-# From dataset used by Varshney et al. completed by 3900 unique connections Cook et al. new dataset
+# From dataset used by Varshney et al. completed by 3900 unique connections from Cook et al. new dataset
 # This updated dataset of the somatic network contains 12071 unique connections
 ADAR,ADAL,electrical
 ADFL,ADAL,electrical

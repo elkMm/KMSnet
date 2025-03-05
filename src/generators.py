@@ -33,7 +33,6 @@ def configuration_model_from_directed_multigraph(graph, seed=None):
     return G
 
 
-
 def random_sample_from_deg_seq(graph, n_iter=100, seed=None):
     '''Generates a sample of n_iter random directed multigraph all with 
      the same degree sequence as the given graph.
